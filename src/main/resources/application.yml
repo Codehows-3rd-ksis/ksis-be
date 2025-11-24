@@ -1,0 +1,16 @@
+spring:
+  application:
+    name: ksis-be
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/crawl
+    username: root
+    password: 1234
+
+  jpa:
+    hibernate:
+      ddl-auto: create
+    show-sql: true
+
+  jwt:
+    secret: "newyourjwtsecretkeythatisatleast256bitslongandbase64encodedexample1234567890123456789012345678901234567890newyourjwtsecretkeythatisatleast256bitslongandbase64encodedexample1234567890123456789012345678901234567890"

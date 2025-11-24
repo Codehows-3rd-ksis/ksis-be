@@ -1,4 +1,4 @@
-package user.jwt;
+package com.codehows.ksisbe.user.jwt;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

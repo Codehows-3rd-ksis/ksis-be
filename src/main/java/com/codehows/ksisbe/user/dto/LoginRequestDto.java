@@ -1,4 +1,4 @@
-package user.dto;
+package com.codehows.ksisbe.user.dto;
 
 import lombok.Getter;
 import lombok.Setter;

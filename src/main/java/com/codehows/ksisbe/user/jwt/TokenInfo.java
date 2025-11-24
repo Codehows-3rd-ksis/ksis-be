@@ -1,4 +1,4 @@
-package user.jwt;
+package com.codehows.ksisbe.user.jwt;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -13,3 +13,4 @@ public class TokenInfo {
     private String GrantType;
     private String accessToken;
 }
+

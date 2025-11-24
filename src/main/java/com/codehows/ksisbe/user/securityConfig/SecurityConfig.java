@@ -1,5 +1,8 @@
-package user.securityConfig;
+package com.codehows.ksisbe.user.securityConfig;
 
+import com.codehows.ksisbe.user.jwt.JwtAuthenticationFilter;
+import com.codehows.ksisbe.user.jwt.JwtTokenProvider;
+import com.codehows.ksisbe.user.security.JwtAuthenticationEntryPoint;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -11,9 +14,6 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import user.jwt.JwtAuthenticationFilter;
-import user.jwt.JwtTokenProvider;
-import user.security.JwtAuthenticationEntryPoint;
 
 @Configuration
 @EnableWebSecurity

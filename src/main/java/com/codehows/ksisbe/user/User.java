@@ -1,4 +1,4 @@
-package user;
+package com.codehows.ksisbe.user;
 
 import jakarta.persistence.*;
 import lombok.*;

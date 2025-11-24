@@ -12,5 +12,6 @@ spring:
       ddl-auto: create
     show-sql: true
 
-  jwt:
-    secret: "newyourjwtsecretkeythatisatleast256bitslongandbase64encodedexample1234567890123456789012345678901234567890newyourjwtsecretkeythatisatleast256bitslongandbase64encodedexample1234567890123456789012345678901234567890"
+
+jwt:
+  secret: "newyourjwtsecretkeythatisatleast256bitslongandbase64encodedexample1234567890123456789012345678901234567890newyourjwtsecretkeythatisatleast256bitslongandbase64encodedexample1234567890123456789012345678901234567890"

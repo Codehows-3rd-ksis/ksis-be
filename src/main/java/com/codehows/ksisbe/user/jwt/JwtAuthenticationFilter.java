@@ -25,8 +25,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
 
             "/ws/**",
-            "/login",
-            "/user/**"
+            "/login"
     );
 
 

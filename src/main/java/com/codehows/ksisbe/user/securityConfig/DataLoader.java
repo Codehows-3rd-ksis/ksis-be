@@ -18,11 +18,11 @@ public class DataLoader implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        if (userRepository.findByUsername("testuser").isEmpty()) {
+        if (userRepository.findByUsername("admin").isEmpty()) {
             User user = User.builder()
-                    .username("testuser")
+                    .username("admin")
                     .password(passwordEncoder.encode("1234"))
-                    .role("ROLE_USER")
+                    .role("ROLE_ADMIN")
                     .createAt(LocalDateTime.now())
                     .isDelete("N")
                     .build();

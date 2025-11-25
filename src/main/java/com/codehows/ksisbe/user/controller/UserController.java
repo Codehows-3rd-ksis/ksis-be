@@ -3,6 +3,8 @@ package com.codehows.ksisbe.user.controller;
 import com.codehows.ksisbe.user.User;
 import com.codehows.ksisbe.user.dto.UserProfileResponse;
 import com.codehows.ksisbe.user.dto.UserRegisterRequest;
+import com.codehows.ksisbe.user.dto.UserShowResponse;
+import com.codehows.ksisbe.user.dto.UserUpdateRequest;
 import com.codehows.ksisbe.user.repository.UserRepository;
 import com.codehows.ksisbe.user.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -10,6 +12,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequiredArgsConstructor
@@ -43,6 +48,31 @@ public class UserController {
 
         return ResponseEntity.ok(response);
     }
-    
 
+    //관리자 유저조회
+    @GetMapping("/user")
+    public ResponseEntity<List<UserShowResponse>> findAllUsers() {
+        List<User> users = userRepository.findAllByIsDelete("N");
+
+        List<UserShowResponse> findList = users.stream()
+                .map(user -> UserShowResponse.builder()
+                        .id(user.getId())
+                        .username(user.getUsername())
+                        .name(user.getName())
+                        .dept(user.getDept())
+                        .ranks(user.getRanks())
+                        .loginAt(user.getLoginAt())
+                        .state(user.getState())
+                        .build())
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(findList);
+    }
+    
+    //관리자 유저수정
+    @PutMapping("/user/{id}")
+    public ResponseEntity<?> updateUser(@PathVariable Long id, @RequestBody UserUpdateRequest dto) {
+        userService.updateUser(id, dto);
+        return ResponseEntity.ok("수정완료");
+    }
 }

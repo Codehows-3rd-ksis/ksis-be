@@ -22,6 +22,7 @@ public class DataLoader implements CommandLineRunner {
             User user = User.builder()
                     .username("admin")
                     .password(passwordEncoder.encode("1234"))
+                    .name("관리자")
                     .role("ROLE_ADMIN")
                     .createAt(LocalDateTime.now())
                     .isDelete("N")

@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class UserShowResponse {
-    private Long id;
+    private Long userId;
     private String username;
     private String name;
     private String dept;

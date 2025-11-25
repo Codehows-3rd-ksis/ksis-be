@@ -56,7 +56,7 @@ public class UserController {
 
         List<UserShowResponse> findList = users.stream()
                 .map(user -> UserShowResponse.builder()
-                        .id(user.getId())
+                        .userId(user.getId())
                         .username(user.getUsername())
                         .name(user.getName())
                         .dept(user.getDept())

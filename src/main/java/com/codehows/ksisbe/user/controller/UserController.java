@@ -75,4 +75,11 @@ public class UserController {
         userService.updateUser(id, dto);
         return ResponseEntity.ok("수정완료");
     }
+
+    //관리자 유저삭제
+    @DeleteMapping("/user/{id}")
+    public ResponseEntity<?> deleteUser(@PathVariable Long id) {
+        userService.deleteUser(id);
+        return ResponseEntity.ok("삭제완료");
+    }
 }

@@ -2,6 +2,8 @@ package com.codehows.ksisbe.user.dto;
 
 import lombok.*;
 
+import java.time.LocalDateTime;
+
 @Getter
 @Setter
 @Builder
@@ -14,4 +16,5 @@ public class UserUpdateRequest {
     private String dept;
     private String ranks;
     private String state;
+    private LocalDateTime updateAt;
 }

@@ -48,11 +48,19 @@ public class UserService {
         user.setDept(dto.getDept());
         user.setRanks(dto.getRanks());
         user.setState(dto.getState());
+        user.setUpdateAt(LocalDateTime.now());
 
         if (dto.getPassword() != null && !dto.getPassword().isBlank()) {
             user.setPassword(passwordEncoder.encode(dto.getPassword()));
         }
 
+        userRepository.save(user);
+    }
+
+    public void deleteUser(Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다: " + id));
+        user.setIsDelete("Y");
         userRepository.save(user);
     }
 }

@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
 public class UserShowResponse {
     private Long userId;
     private String username;
+    private String role;
     private String name;
     private String dept;
     private String ranks;

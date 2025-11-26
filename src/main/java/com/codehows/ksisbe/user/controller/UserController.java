@@ -58,6 +58,7 @@ public class UserController {
                 .map(user -> UserShowResponse.builder()
                         .userId(user.getId())
                         .username(user.getUsername())
+                        .role(user.getRole())
                         .name(user.getName())
                         .dept(user.getDept())
                         .ranks(user.getRanks())

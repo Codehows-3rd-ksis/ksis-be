@@ -30,18 +30,18 @@ public class AuthService {
 
     public TokenInfo login(LoginRequestDto loginRequestDto) {
         User user = userRepository.findByUsernameAndIsDelete(loginRequestDto.getUsername(), "N")
-                .orElseThrow(() -> new UsernameNotFoundException("유저를 찾을 수 없습니다: "+ loginRequestDto.getUsername()));
+                .orElseThrow(() -> new BadCredentialsException("유저를 찾을 수 없습니다: "+ loginRequestDto.getUsername()));
 
         log.info("찾은 유저: {}", user.getUsername());
         log.info("입력된 비밀번호: {}", loginRequestDto.getPassword());
         log.info("DB 비밀번호 (암호화된 상태): {}", user.getPassword());
 
-        if ("승인대기".equals(user.getState())) {
-            throw new BadCredentialsException("승인대기 상태입니다. 관리자의 승인이 필요합니다.");
-        }
-
         if (!passwordEncoder.matches(loginRequestDto.getPassword(), user.getPassword())) {
             throw new BadCredentialsException(("유효하지 않은 비밀번호입니다."));
+        }
+
+        if ("승인대기".equals(user.getState())) {
+            throw new BadCredentialsException("승인대기 상태입니다. 관리자의 승인이 필요합니다.");
         }
 
         List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority(user.getRole()));

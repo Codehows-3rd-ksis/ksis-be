@@ -52,7 +52,8 @@ public class UserController {
     //관리자 유저조회
     @GetMapping("/user")
     public ResponseEntity<List<UserShowResponse>> findAllUsers() {
-        List<User> users = userRepository.findAllByIsDelete("N");
+        List<User> users = userRepository.findAllByIsDeleteAndRoleNot("N", "ROLE_ADMIN");
+
 
         List<UserShowResponse> findList = users.stream()
                 .map(user -> UserShowResponse.builder()

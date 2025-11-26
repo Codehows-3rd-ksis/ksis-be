@@ -36,6 +36,9 @@ public class AuthService {
         log.info("입력된 비밀번호: {}", loginRequestDto.getPassword());
         log.info("DB 비밀번호 (암호화된 상태): {}", user.getPassword());
 
+        if ("승인대기".equals(user.getState())) {
+            throw new BadCredentialsException("승인대기 상태입니다. 관리자의 승인이 필요합니다.");
+        }
 
         if (!passwordEncoder.matches(loginRequestDto.getPassword(), user.getPassword())) {
             throw new BadCredentialsException(("유효하지 않은 비밀번호입니다."));

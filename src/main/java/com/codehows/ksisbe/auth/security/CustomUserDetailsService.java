@@ -1,4 +1,4 @@
-package com.codehows.ksisbe.user.security;
+package com.codehows.ksisbe.auth.security;
 
 import com.codehows.ksisbe.user.User;
 import com.codehows.ksisbe.user.repository.UserRepository;

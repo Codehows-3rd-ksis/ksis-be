@@ -1,4 +1,4 @@
-package com.codehows.ksisbe.user.security;
+package com.codehows.ksisbe.auth.security;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;

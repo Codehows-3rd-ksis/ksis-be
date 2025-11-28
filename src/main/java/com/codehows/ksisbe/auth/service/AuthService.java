@@ -1,9 +1,9 @@
-package com.codehows.ksisbe.user.service;
+package com.codehows.ksisbe.auth.service;
 
 import com.codehows.ksisbe.user.User;
-import com.codehows.ksisbe.user.dto.LoginRequestDto;
-import com.codehows.ksisbe.user.jwt.JwtTokenProvider;
-import com.codehows.ksisbe.user.jwt.TokenInfo;
+import com.codehows.ksisbe.auth.dto.LoginRequestDto;
+import com.codehows.ksisbe.auth.jwt.JwtTokenProvider;
+import com.codehows.ksisbe.auth.jwt.TokenInfo;
 import com.codehows.ksisbe.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -12,7 +12,6 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 

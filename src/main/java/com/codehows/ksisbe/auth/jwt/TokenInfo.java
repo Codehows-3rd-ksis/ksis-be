@@ -1,4 +1,4 @@
-package com.codehows.ksisbe.user.jwt;
+package com.codehows.ksisbe.auth.jwt;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

@@ -1,8 +1,8 @@
-package com.codehows.ksisbe.user.securityConfig;
+package com.codehows.ksisbe.auth.securityConfig;
 
-import com.codehows.ksisbe.user.jwt.JwtAuthenticationFilter;
-import com.codehows.ksisbe.user.jwt.JwtTokenProvider;
-import com.codehows.ksisbe.user.security.JwtAuthenticationEntryPoint;
+import com.codehows.ksisbe.auth.jwt.JwtAuthenticationFilter;
+import com.codehows.ksisbe.auth.jwt.JwtTokenProvider;
+import com.codehows.ksisbe.auth.security.JwtAuthenticationEntryPoint;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

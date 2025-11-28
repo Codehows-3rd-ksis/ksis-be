@@ -1,17 +1,15 @@
-package com.codehows.ksisbe.user.controller;
+package com.codehows.ksisbe.auth.controller;
 
-import com.codehows.ksisbe.user.dto.LoginRequestDto;
-import com.codehows.ksisbe.user.jwt.TokenInfo;
-import com.codehows.ksisbe.user.service.AuthService;
+import com.codehows.ksisbe.auth.dto.LoginRequestDto;
+import com.codehows.ksisbe.auth.jwt.TokenInfo;
+import com.codehows.ksisbe.auth.service.AuthService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Map;

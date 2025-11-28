@@ -1,4 +1,4 @@
-package com.codehows.ksisbe.user.jwt;
+package com.codehows.ksisbe.auth.jwt;
 
 
 import io.jsonwebtoken.*;

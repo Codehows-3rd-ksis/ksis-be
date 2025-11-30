@@ -4,20 +4,18 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 public class RobotsTxtRules {
 
-    private final Map<String, List<String>> disallowMap = new HashMap<>();
-    private final List<String> globalDisallow = new ArrayList<>();
+    private final Map<String, List<Pattern>> disallowMap = new HashMap<>();
+    private final List<Pattern> globalDisallow = new ArrayList<>();
 
-    public RobotsTxtRules(Map<String, List<String>> disallowMap, List<String> globalDisallow) {
+    public RobotsTxtRules(Map<String, List<Pattern>> disallowMap, List<Pattern> globalDisallow) {
         this.disallowMap.putAll(disallowMap);
         this.globalDisallow.addAll(globalDisallow);
     }
 
-    /**
-     * 주어진 userAgent에 대해 path가 허용되는지 검사
-     */
     public boolean isAllowed(String userAgent, String path) {
         if (userAgent == null) userAgent = "";
         userAgent = userAgent.toLowerCase();
@@ -25,17 +23,33 @@ public class RobotsTxtRules {
         if (disallowMap.containsKey(userAgent)) {
             return isPathAllowed(disallowMap.get(userAgent), path);
         }
+        if (disallowMap.containsKey("*")) {
+            return isPathAllowed(disallowMap.get("*"), path);
+        }
         return isPathAllowed(globalDisallow, path);
     }
 
-    private boolean isPathAllowed(List<String> disallowList, String path) {
+    private boolean isPathAllowed(List<Pattern> disallowList, String path) {
         if (disallowList == null || disallowList.isEmpty()) return true;
-        for (String disallowedPath : disallowList) {
-            if (disallowedPath.equals("")) continue; // 빈 disallow는 허용 의미
-            if (path.startsWith(disallowedPath)) {
+
+        for (Pattern pattern : disallowList) {
+            String patternStr = pattern.pattern();
+
+            // 정확히 "/" 일 때만 path도 "/" 인 경우 차단
+            if (patternStr.equals("/")) {
+                if (path.equals("/")) {
+                    return false;
+                }
+                // "/"가 아니면 계속 다음 검사
+                continue;
+            }
+
+            // 그 외 패턴은 find() 로 검사
+            if (pattern.matcher(path).find()) {
                 return false;
             }
         }
+
         return true;
     }
 }

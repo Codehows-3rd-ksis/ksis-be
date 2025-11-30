@@ -4,15 +4,13 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 public class RobotsTxtParser {
 
-    /**
-     * robots.txt 문자열을 받아 파싱해 RobotsTxtRules 반환
-     */
     public static RobotsTxtRules parse(String content) {
-        Map<String, List<String>> disallowMap = new HashMap<>();
-        List<String> globalDisallow = new ArrayList<>();
+        Map<String, List<Pattern>> disallowMap = new HashMap<>();
+        List<Pattern> globalDisallow = new ArrayList<>();
 
         String currentUserAgent = null;
 
@@ -31,15 +29,33 @@ public class RobotsTxtParser {
             if ("user-agent".equals(key)) {
                 currentUserAgent = value.toLowerCase();
                 disallowMap.putIfAbsent(currentUserAgent, new ArrayList<>());
-            } else if ("disallow".equals(key)) {
+            }
+            else if ("disallow".equals(key)) {
+                Pattern pattern = convertToRegexPattern(value);
+
                 if (currentUserAgent == null) {
-                    globalDisallow.add(value);
+                    globalDisallow.add(pattern);
                 } else {
-                    disallowMap.get(currentUserAgent).add(value);
+                    disallowMap.get(currentUserAgent).add(pattern);
                 }
             }
         }
 
         return new RobotsTxtRules(disallowMap, globalDisallow);
+    }
+
+    /**
+     * robots.txt의 Disallow 경로를 Regex로 변환
+     */
+    private static Pattern convertToRegexPattern(String rule) {
+        if (rule.equals("")) {
+            // 빈 disallow는 "전부 허용" 의미
+            return Pattern.compile("$^");
+        }
+
+        // 기본적으로 * 를 ".*" 로 치환
+        String regex = rule.replace("*", ".*");
+
+        return Pattern.compile(regex);
     }
 }

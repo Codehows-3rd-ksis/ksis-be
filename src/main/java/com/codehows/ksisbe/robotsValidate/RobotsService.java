@@ -7,7 +7,6 @@ import org.springframework.web.client.RestTemplate;
 import java.net.URI;
 
 @Service
-@RequiredArgsConstructor
 public class RobotsService {
 
     private final RestTemplate restTemplate = new RestTemplate();

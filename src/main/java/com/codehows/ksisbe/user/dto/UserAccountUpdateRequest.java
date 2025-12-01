@@ -9,10 +9,8 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserUpdateRequest {
-    private String name;
-    private String dept;
-    private String ranks;
-    private String state;
+public class UserAccountUpdateRequest {
+    private String username;
+    private String password;
     private LocalDateTime updateAt;
 }

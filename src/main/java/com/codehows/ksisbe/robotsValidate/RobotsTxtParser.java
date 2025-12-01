@@ -10,9 +10,11 @@ public class RobotsTxtParser {
 
     public static RobotsTxtRules parse(String content) {
         Map<String, List<Pattern>> disallowMap = new HashMap<>();
+        Map<String, List<Pattern>> allowMap = new HashMap<>();
         List<Pattern> globalDisallow = new ArrayList<>();
+        List<Pattern> globalAllow = new ArrayList<>();
 
-        String currentUserAgent = null;
+        String currentAgent = null;
 
         String[] lines = content.split("\\r?\\n");
 
@@ -26,36 +28,32 @@ public class RobotsTxtParser {
             String key = parts[0].trim().toLowerCase();
             String value = parts[1].trim();
 
-            if ("user-agent".equals(key)) {
-                currentUserAgent = value.toLowerCase();
-                disallowMap.putIfAbsent(currentUserAgent, new ArrayList<>());
-            }
-            else if ("disallow".equals(key)) {
-                Pattern pattern = convertToRegexPattern(value);
+            switch (key) {
+                case "user-agent":
+                    currentAgent = value.toLowerCase();
+                    disallowMap.putIfAbsent(currentAgent, new ArrayList<>());
+                    allowMap.putIfAbsent(currentAgent, new ArrayList<>());
+                    break;
 
-                if (currentUserAgent == null) {
-                    globalDisallow.add(pattern);
-                } else {
-                    disallowMap.get(currentUserAgent).add(pattern);
-                }
+                case "disallow":
+                    Pattern dis = convertToRegex(value);
+                    if (currentAgent == null) globalDisallow.add(dis);
+                    else disallowMap.get(currentAgent).add(dis);
+                    break;
+
+                case "allow":
+                    Pattern allow = convertToRegex(value);
+                    if (currentAgent == null) globalAllow.add(allow);
+                    else allowMap.get(currentAgent).add(allow);
+                    break;
             }
         }
 
-        return new RobotsTxtRules(disallowMap, globalDisallow);
+        return new RobotsTxtRules(disallowMap, allowMap, globalDisallow, globalAllow);
     }
 
-    /**
-     * robots.txt의 Disallow 경로를 Regex로 변환
-     */
-    private static Pattern convertToRegexPattern(String rule) {
-        if (rule.equals("")) {
-            // 빈 disallow는 "전부 허용" 의미
-            return Pattern.compile("$^");
-        }
-
-        // 기본적으로 * 를 ".*" 로 치환
-        String regex = rule.replace("*", ".*");
-
-        return Pattern.compile(regex);
+    private static Pattern convertToRegex(String rule) {
+        if (rule.equals("")) return Pattern.compile("$^"); // always false
+        return Pattern.compile(rule.replace("*", ".*"));
     }
 }

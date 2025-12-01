@@ -8,48 +8,55 @@ import java.util.regex.Pattern;
 
 public class RobotsTxtRules {
 
-    private final Map<String, List<Pattern>> disallowMap = new HashMap<>();
-    private final List<Pattern> globalDisallow = new ArrayList<>();
+    private final Map<String, List<Pattern>> disallowMap;
+    private final Map<String, List<Pattern>> allowMap;
 
-    public RobotsTxtRules(Map<String, List<Pattern>> disallowMap, List<Pattern> globalDisallow) {
-        this.disallowMap.putAll(disallowMap);
-        this.globalDisallow.addAll(globalDisallow);
+    private final List<Pattern> globalDisallow;
+    private final List<Pattern> globalAllow;
+
+    public RobotsTxtRules(
+            Map<String, List<Pattern>> disallowMap,
+            Map<String, List<Pattern>> allowMap,
+            List<Pattern> globalDisallow,
+            List<Pattern> globalAllow
+    ) {
+        this.disallowMap = disallowMap;
+        this.allowMap = allowMap;
+        this.globalDisallow = globalDisallow;
+        this.globalAllow = globalAllow;
     }
 
     public boolean isAllowed(String userAgent, String path) {
-        if (userAgent == null) userAgent = "";
-        userAgent = userAgent.toLowerCase();
+        userAgent = (userAgent == null ? "" : userAgent.toLowerCase());
 
-        if (disallowMap.containsKey(userAgent)) {
-            return isPathAllowed(disallowMap.get(userAgent), path);
-        }
-        if (disallowMap.containsKey("*")) {
-            return isPathAllowed(disallowMap.get("*"), path);
-        }
-        return isPathAllowed(globalDisallow, path);
+        List<Pattern> disList = disallowMap.getOrDefault(userAgent, disallowMap.getOrDefault("*", globalDisallow));
+        List<Pattern> allowList = allowMap.getOrDefault(userAgent, allowMap.getOrDefault("*", globalAllow));
+
+        return evaluateRules(disList, allowList, path);
     }
 
-    private boolean isPathAllowed(List<Pattern> disallowList, String path) {
-        if (disallowList == null || disallowList.isEmpty()) return true;
+    private boolean evaluateRules(List<Pattern> disallow, List<Pattern> allow, String path) {
+        int longestDis = matchLength(disallow, path);
+        int longestAllow = matchLength(allow, path);
 
-        for (Pattern pattern : disallowList) {
-            String patternStr = pattern.pattern();
+        // Allow 규칙이 더 길게 매칭되면 허용
+        if (longestAllow > longestDis) return true;
 
-            // 정확히 "/" 일 때만 path도 "/" 인 경우 차단
-            if (patternStr.equals("/")) {
-                if (path.equals("/")) {
-                    return false;
-                }
-                // "/"가 아니면 계속 다음 검사
-                continue;
-            }
+        // disallow가 걸리면 차단
+        if (longestDis > 0) return false;
 
-            // 그 외 패턴은 find() 로 검사
-            if (pattern.matcher(path).find()) {
-                return false;
+        // 아무 것도 안 걸리면 허용
+        return true;
+    }
+
+    private int matchLength(List<Pattern> list, String path) {
+        int max = 0;
+        for (Pattern p : list) {
+            var m = p.matcher(path);
+            if (m.find()) {
+                max = Math.max(max, m.end());
             }
         }
-
-        return true;
+        return max;
     }
 }

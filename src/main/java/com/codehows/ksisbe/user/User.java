@@ -1,9 +1,12 @@
 package com.codehows.ksisbe.user;
 
+import com.codehows.ksisbe.setting.entity.Setting;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "user")
@@ -50,4 +53,7 @@ public class User {
 
     @Column(name = "is_delete", length = 1, nullable = false)
     private String isDelete;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Setting> settings = new ArrayList<>();
 }

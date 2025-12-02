@@ -62,7 +62,7 @@ public class CrawlService {
                 if (scrolled < scrollHeight)
                     js.executeScript("window.scrollTo(0, arguments[0]);", scrolled);
 
-                Thread.sleep(400);
+                Thread.sleep(600);
             }
             g2d.dispose();
 

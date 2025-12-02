@@ -14,7 +14,9 @@ public class RobotsTxtParser {
         List<Pattern> globalDisallow = new ArrayList<>();
         List<Pattern> globalAllow = new ArrayList<>();
 
-        String currentAgent = null;
+        // 기존: String currentAgent
+        // 변경: 여러 User-agent 를 저장
+        List<String> currentAgents = new ArrayList<>();
 
         String[] lines = content.split("\\r?\\n");
 
@@ -30,21 +32,47 @@ public class RobotsTxtParser {
 
             switch (key) {
                 case "user-agent":
-                    currentAgent = value.toLowerCase();
-                    disallowMap.putIfAbsent(currentAgent, new ArrayList<>());
-                    allowMap.putIfAbsent(currentAgent, new ArrayList<>());
+                    String agent = value.toLowerCase();
+
+                    // 새로운 그룹이 시작된 경우 판단
+                    // 규칙 없이 user-agent만 연속해서 나오면 같은 그룹
+                    if (!currentAgents.isEmpty()) {
+                        String prev = currentAgents.get(currentAgents.size() - 1);
+                        if (!disallowMap.get(prev).isEmpty() || !allowMap.get(prev).isEmpty()) {
+                            // 이전 그룹에 규칙이 있었으면 새로운 그룹 시작
+                            currentAgents.clear();
+                        }
+                    }
+
+                    currentAgents.add(agent);
+
+                    // agent별 리스트 생성
+                    disallowMap.putIfAbsent(agent, new ArrayList<>());
+                    allowMap.putIfAbsent(agent, new ArrayList<>());
                     break;
 
                 case "disallow":
                     Pattern dis = convertToRegex(value);
-                    if (currentAgent == null) globalDisallow.add(dis);
-                    else disallowMap.get(currentAgent).add(dis);
+
+                    if (currentAgents.isEmpty()) {
+                        globalDisallow.add(dis);
+                    } else {
+                        for (String a : currentAgents) {
+                            disallowMap.get(a).add(dis);
+                        }
+                    }
                     break;
 
                 case "allow":
                     Pattern allow = convertToRegex(value);
-                    if (currentAgent == null) globalAllow.add(allow);
-                    else allowMap.get(currentAgent).add(allow);
+
+                    if (currentAgents.isEmpty()) {
+                        globalAllow.add(allow);
+                    } else {
+                        for (String a : currentAgents) {
+                            allowMap.get(a).add(allow);
+                        }
+                    }
                     break;
             }
         }
@@ -53,7 +81,7 @@ public class RobotsTxtParser {
     }
 
     private static Pattern convertToRegex(String rule) {
-        if (rule.equals("")) return Pattern.compile("$^"); // always false
+        if (rule.equals("")) return Pattern.compile("$^");
         return Pattern.compile(rule.replace("*", ".*"));
     }
 }

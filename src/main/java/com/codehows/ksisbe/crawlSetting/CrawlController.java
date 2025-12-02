@@ -3,6 +3,7 @@ package com.codehows.ksisbe.crawlSetting;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -20,7 +21,7 @@ public class CrawlController {
     /**
      * ✅ 전체 페이지 미리보기 캡처
      */
-    @GetMapping("/preview")
+    @PostMapping("/preview")
     public ResponseEntity<Map<String, Object>> previewPage(@RequestParam String url) {
         try {
             Map<String, Object> data = crawlService.captureFullPageWithHtml(url);

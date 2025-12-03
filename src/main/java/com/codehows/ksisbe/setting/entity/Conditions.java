@@ -20,7 +20,7 @@ public class Conditions {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "setting_id", nullable = false)
-    @JsonBackReference
+//    @JsonBackReference
     private Setting setting;
 
     @Column(name = "conditions_key", length = 20, nullable = false)

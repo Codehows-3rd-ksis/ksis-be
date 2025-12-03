@@ -54,6 +54,6 @@ public class User {
     @Column(name = "is_delete", length = 1, nullable = false)
     private String isDelete;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Setting> settings = new ArrayList<>();
+//    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+//    private List<Setting> settings = new ArrayList<>();
 }

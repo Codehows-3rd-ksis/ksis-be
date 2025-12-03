@@ -26,7 +26,7 @@ public class Setting {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
-    @JsonBackReference
+//    @JsonBackReference
     private User user;
 
     @Column(name = "setting_name", nullable = false, length = 255)
@@ -54,7 +54,7 @@ public class Setting {
     private String pagingArea;
 
     @Column(name = "paging_nextbtn", columnDefinition = "TEXT")
-    private String pagingNextBtn;
+    private String pagingNextbtn;
 
     @Column(name = "max_page")
     private Integer maxPage;
@@ -73,6 +73,6 @@ public class Setting {
     private String isDelete = "N";
 
     @OneToMany(mappedBy = "setting", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonManagedReference
+//    @JsonManagedReference
     private List<Conditions> conditions = new ArrayList<>();
 }

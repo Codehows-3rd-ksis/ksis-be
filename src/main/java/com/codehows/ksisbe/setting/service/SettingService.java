@@ -33,7 +33,7 @@ public class SettingService {
     @Transactional
     public void createSetting(Long userId, SettingRequestDto dto) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("유효하지 않은 유저"));
+                .orElseThrow(() -> new UsernameNotFoundException("유효하지 않은 유저"));
 
         // DTO → 엔티티 변환
         Setting setting = Setting.builder()

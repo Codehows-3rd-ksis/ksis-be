@@ -41,11 +41,7 @@ public class SettingController {
 
             return ResponseEntity.ok("설정등록완료");
 
-        } catch (UsernameNotFoundException e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(Map.of("message", e.getMessage()));
-
-        } catch (IllegalStateException e) {
+        } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(Map.of("message", e.getMessage()));
         }
@@ -98,13 +94,21 @@ public class SettingController {
 
         String username = authentication.getName();
 
-        User user = userRepository.findByUsernameAndIsDelete(username, "N")
-                .orElseThrow((() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다: " + username)));
-        Long userId = user.getId();
+        try {
+            User user = userRepository.findByUsernameAndIsDelete(username, "N")
+                    .orElseThrow((() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다: " + username)));
+            Long userId = user.getId();
+            settingService.updateSetting(userId, settingId, settingUpdateDto);
 
-        settingService.updateSetting(userId, settingId, settingUpdateDto);
+            return ResponseEntity.ok("수정완료");
 
-        return ResponseEntity.ok("수정완료");
+        }catch (AccessDeniedException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("message", e.getMessage()));
+        }catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("message", e.getMessage()));
+        }
     }
 
     //설정삭제

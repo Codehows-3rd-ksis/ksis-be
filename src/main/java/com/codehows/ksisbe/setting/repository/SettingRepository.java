@@ -12,4 +12,7 @@ public interface SettingRepository extends JpaRepository<Setting, Long> {
 
     Optional<Setting> findBySettingIdAndIsDelete(Long settingId, String isDelete);
 
+    List<Setting> findByUserIdAndIsDelete(Long userId, String isDelete);
+
+    List<Setting> findByIsDelete(String isDelete);
 }

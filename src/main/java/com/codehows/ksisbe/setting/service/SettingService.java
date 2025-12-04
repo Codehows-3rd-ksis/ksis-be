@@ -30,7 +30,7 @@ public class SettingService {
     @Transactional
     public void createSetting(Long userId, SettingRequestDto dto) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new UsernameNotFoundException("유효하지 않은 유저"));
+                .orElseThrow(() -> new RuntimeException("유효하지 않은 유저"));
 
         // DTO → 엔티티 변환
         Setting setting = Setting.builder()
@@ -76,7 +76,7 @@ public class SettingService {
             setting.setMaxPage(null);
             setting.setLinkArea(null);
         } else if (!"다중".equalsIgnoreCase(setting.getType())) {
-            throw new IllegalArgumentException("없는 세팅타입: " + setting.getType());
+            throw new RuntimeException("없는 세팅타입: " + setting.getType());
         }
 
         settingRepository.save(setting);
@@ -91,9 +91,9 @@ public class SettingService {
         List<Setting> settings;
 
         if ("ROLE_ADMIN".equals(user.getRole())) {
-            settings = settingRepository.findAll();
+            settings = settingRepository.findByIsDelete("N");
         } else {
-            settings = settingRepository.findByUserId(user.getId());
+            settings = settingRepository.findByUserIdAndIsDelete(user.getId(),"N");
         }
 
         return settings.stream()
@@ -146,10 +146,10 @@ public class SettingService {
     @Transactional
     public void updateSetting(Long userId, Long settingId, SettingUpdateDto settingUpdateDto) {
         Setting setting = settingRepository.findBySettingIdAndIsDelete(settingId, "N")
-                .orElseThrow(() -> new IllegalArgumentException("해당 설정을 찾을 수 없습니다."));
+                .orElseThrow(() -> new RuntimeException("해당 설정을 찾을 수 없습니다."));
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("유효하지 않은 유저입니다."));
+                .orElseThrow(() -> new RuntimeException("유효하지 않은 유저입니다."));
 
         // 권한 체크
         if (!user.getRole().equals("ROLE_ADMIN") && !setting.getUser().getId().equals(userId)) {
@@ -164,7 +164,7 @@ public class SettingService {
             settingUpdateDto.setMaxPage(null);
             settingUpdateDto.setLinkArea(null);
         } else if (!"다중".equalsIgnoreCase(settingUpdateDto.getType())) {
-            throw new IllegalArgumentException("없는 세팅 타입: " + settingUpdateDto.getType());
+            throw new RuntimeException("없는 세팅 타입: " + settingUpdateDto.getType());
         }
         //설정정보수정
         setting.setSettingName(settingUpdateDto.getSettingName());

@@ -115,12 +115,13 @@ public class SettingService {
                 .toList();
     }
 
+    //설정수정 조건조회
     @Transactional(readOnly = true)
     public List<ConditionsShowDto> findConditions(Long settingId, String username) {
         User user = userRepository.findByUsernameAndIsDelete(username, "N")
                 .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다: " + username));
 
-        Setting setting = settingRepository.findById(settingId)
+        Setting setting = settingRepository.findBySettingIdAndIsDelete(settingId,"N")
                 .orElseThrow(() -> new RuntimeException("설정아이디를 찾을 수 없습니다."));
 
         // 관리자라면 모든 설정 조회 가능, 아니면 본인 것만 조회 가능
@@ -141,9 +142,10 @@ public class SettingService {
                 .toList();
     }
 
+    //설정수정
     @Transactional
     public void updateSetting(Long userId, Long settingId, SettingUpdateDto settingUpdateDto) {
-        Setting setting = settingRepository.findById(settingId)
+        Setting setting = settingRepository.findBySettingIdAndIsDelete(settingId, "N")
                 .orElseThrow(() -> new IllegalArgumentException("해당 설정을 찾을 수 없습니다."));
 
         User user = userRepository.findById(userId)
@@ -225,5 +227,20 @@ public class SettingService {
 
         }
         setting.setConditions(existingConditions);
+    }
+    
+    //설정삭제
+    public void deleteSetting(Long settingId, String username) {
+        Setting setting = settingRepository.findBySettingIdAndIsDelete(settingId, "N")
+                .orElseThrow(() -> new IllegalArgumentException("유효한 설정아이디 입니다."));
+        User user = userRepository.findByUsernameAndIsDelete(username, "N")
+                .orElseThrow(() -> new IllegalArgumentException("유효하지 않은 유저입니다."));
+
+        // 권한 체크
+        if (!user.getRole().equals("ROLE_ADMIN") && !setting.getUser().getId().equals(user.getId())) {
+            throw new AccessDeniedException("수정 권한이 없습니다.");
+        }
+        setting.setIsDelete("Y");
+        settingRepository.save(setting);
     }
 }

@@ -107,4 +107,12 @@ public class SettingController {
         return ResponseEntity.ok("수정완료");
     }
 
+    //설정삭제
+    @DeleteMapping("/setting/{settingId}")
+    public ResponseEntity<?> deleteSetting(@PathVariable Long settingId, Authentication authentication) {
+        String username = authentication.getName();
+        settingService.deleteSetting(settingId, username);
+        return ResponseEntity.ok("삭제완료");
+    }
+
 }

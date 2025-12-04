@@ -3,6 +3,8 @@ package com.codehows.ksisbe.setting.controller;
 import com.codehows.ksisbe.setting.dto.ConditionsShowDto;
 import com.codehows.ksisbe.setting.dto.SettingRequestDto;
 import com.codehows.ksisbe.setting.dto.SettingShowDto;
+import com.codehows.ksisbe.setting.dto.SettingUpdateDto;
+import com.codehows.ksisbe.setting.entity.Setting;
 import com.codehows.ksisbe.setting.service.SettingService;
 import com.codehows.ksisbe.user.User;
 import com.codehows.ksisbe.user.repository.UserRepository;
@@ -43,7 +45,7 @@ public class SettingController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(Map.of("message", e.getMessage()));
 
-        }catch (IllegalStateException e) {
+        } catch (IllegalStateException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(Map.of("message", e.getMessage()));
         }
@@ -76,16 +78,33 @@ public class SettingController {
 
         } catch (UsernameNotFoundException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(Map.of("message", e.getMessage()) );
+                    .body(Map.of("message", e.getMessage()));
 
         } catch (AccessDeniedException e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("message", e.getMessage()) );
+                    .body(Map.of("message", e.getMessage()));
 
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(Map.of("message", e.getMessage()) );
+                    .body(Map.of("message", e.getMessage()));
 
         }
     }
+
+    //설정수정
+    @PutMapping("/setting/{settingId}")
+    public ResponseEntity<?> updateSetting(@PathVariable Long settingId,
+                                           @RequestBody SettingUpdateDto settingUpdateDto, Authentication authentication) {
+
+        String username = authentication.getName();
+
+        User user = userRepository.findByUsernameAndIsDelete(username, "N")
+                .orElseThrow((() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다: " + username)));
+        Long userId = user.getId();
+
+        settingService.updateSetting(userId, settingId, settingUpdateDto);
+
+        return ResponseEntity.ok("수정완료");
+    }
+
 }

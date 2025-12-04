@@ -1,9 +1,6 @@
 package com.codehows.ksisbe.setting.service;
 
-import com.codehows.ksisbe.setting.dto.ConditionsRequestDto;
-import com.codehows.ksisbe.setting.dto.ConditionsShowDto;
-import com.codehows.ksisbe.setting.dto.SettingRequestDto;
-import com.codehows.ksisbe.setting.dto.SettingShowDto;
+import com.codehows.ksisbe.setting.dto.*;
 import com.codehows.ksisbe.setting.entity.Conditions;
 import com.codehows.ksisbe.setting.entity.Setting;
 import com.codehows.ksisbe.setting.repository.ConditionsRepository;
@@ -142,5 +139,91 @@ public class SettingService {
                         .attr(c.getAttr())
                         .build())
                 .toList();
+    }
+
+    @Transactional
+    public void updateSetting(Long userId, Long settingId, SettingUpdateDto settingUpdateDto) {
+        Setting setting = settingRepository.findById(settingId)
+                .orElseThrow(() -> new IllegalArgumentException("해당 설정을 찾을 수 없습니다."));
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("유효하지 않은 유저입니다."));
+
+        // 권한 체크
+        if (!user.getRole().equals("ROLE_ADMIN") && !setting.getUser().getId().equals(userId)) {
+            throw new AccessDeniedException("수정 권한이 없습니다.");
+        }
+        // 단일/다중 타입에 따른 필드 초기화
+        if ("단일".equalsIgnoreCase(settingUpdateDto.getType())) {
+            settingUpdateDto.setListArea(null);
+            settingUpdateDto.setPagingType(null);
+            settingUpdateDto.setPagingArea(null);
+            settingUpdateDto.setPagingNextbtn(null);
+            settingUpdateDto.setMaxPage(null);
+            settingUpdateDto.setLinkArea(null);
+        } else if (!"다중".equalsIgnoreCase(settingUpdateDto.getType())) {
+            throw new IllegalArgumentException("없는 세팅 타입: " + settingUpdateDto.getType());
+        }
+        //설정정보수정
+        setting.setSettingName(settingUpdateDto.getSettingName());
+        setting.setUrl(settingUpdateDto.getUrl());
+        setting.setType(settingUpdateDto.getType());
+        setting.setUserAgent(settingUpdateDto.getUserAgent());
+        setting.setRate(settingUpdateDto.getRate());
+        setting.setListArea(settingUpdateDto.getListArea());
+        setting.setPagingType(settingUpdateDto.getPagingType());
+        setting.setPagingArea(settingUpdateDto.getPagingArea());
+        setting.setPagingNextbtn(settingUpdateDto.getPagingNextbtn());
+        setting.setMaxPage(settingUpdateDto.getMaxPage());
+        setting.setLinkArea(settingUpdateDto.getLinkArea());
+        setting.setUpdateAt(LocalDateTime.now());
+
+        //클라이언트에서 받은 setting conditions
+        List<ConditionsUpdateDto> newConditionsDto = settingUpdateDto.getConditions();
+        //기존 DB에 저장되어있는 conditions
+        List<Conditions> existingConditions = setting.getConditions();
+
+        //아이디가 있는 것들만 추출
+        List<Long> newConditionsId = new ArrayList<>();
+        for (ConditionsUpdateDto c : newConditionsDto) {
+            if (c.getConditionsId() != null) {
+                newConditionsId.add(c.getConditionsId());
+            }
+        }
+        //아이디가 있는 것들만 추출한 것에서 존재하지 않는 아이디 찾기
+        List<Conditions> toRemove = new ArrayList<>(); //삭제할 아이디 리스트
+        for (Conditions c : existingConditions) {
+            if (!newConditionsId.contains(c.getConditionsId())) {
+                toRemove.add(c);
+            }
+        }
+        // 삭제 대상 조건들을 기존 리스트에서 제거
+        for (Conditions c : toRemove) {
+            existingConditions.remove(c);
+        }
+        //수정, 추가
+        for (ConditionsUpdateDto newDto : newConditionsDto) {
+            if (newDto.getConditionsId() != null) {
+                // 수정: 기존 조건 중 해당 ID 찾기
+                for (Conditions existingCondition : existingConditions) {
+                    if (existingCondition.getConditionsId().equals(newDto.getConditionsId())) {
+                        existingCondition.setConditionsKey(newDto.getConditionsKey());
+                        existingCondition.setConditionsValue(newDto.getConditionsValue());
+                        existingCondition.setAttr(newDto.getAttr());
+                        break;
+                    }
+                }
+            } else {
+                // 추가: 새 조건인 경우 새 엔티티 생성해서 리스트에 추가
+                Conditions newCondition = new Conditions();
+                newCondition.setConditionsKey(newDto.getConditionsKey());
+                newCondition.setConditionsValue(newDto.getConditionsValue());
+                newCondition.setAttr(newDto.getAttr());
+                newCondition.setSetting(setting); // 연관관계 설정
+                existingConditions.add(newCondition);
+            }
+
+        }
+        setting.setConditions(existingConditions);
     }
 }

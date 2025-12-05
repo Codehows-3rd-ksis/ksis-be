@@ -32,7 +32,7 @@ public class CrawlingService {
         }
         String type = setting.getType();
         if ("단일".equalsIgnoreCase(type)) {
-            startSingleCrawlingService.startSingleCrawling(setting, user);
+            startSingleCrawlingService.startSingleCrawling(settingId, user);
         }
         else if ("다중".equalsIgnoreCase(type)) {
             startMultipleCrawlingService.startMultipleCrawling(setting, user);

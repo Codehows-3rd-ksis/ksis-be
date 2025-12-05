@@ -6,6 +6,7 @@ import com.codehows.ksisbe.crawling.repository.CrawlResultItemRepository;
 import com.codehows.ksisbe.crawling.repository.CrawlWorkRepository;
 import com.codehows.ksisbe.setting.entity.Conditions;
 import com.codehows.ksisbe.setting.entity.Setting;
+import com.codehows.ksisbe.setting.repository.SettingRepository;
 import com.codehows.ksisbe.user.User;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -27,12 +28,17 @@ import java.util.NoSuchElementException;
 @RequiredArgsConstructor
 public class StartSingleCrawlingService {
 
+    private final SettingRepository settingRepository;
     private final WebDriverFactory webDriverFactory;
     private final CrawlWorkRepository crawlWorkRepository;
     private final CrawlResultItemRepository crawlResultItemRepository;
 
+    @Transactional
+    public void startSingleCrawling(Long  settingId, User user) {
+        // ⭐ 여기서 Setting을 다시 조회 → 동일 스레드 안에서 트랜잭션 열림
+        Setting setting = settingRepository.findBySettingIdAndIsDelete(settingId, "N")
+                .orElseThrow(() -> new RuntimeException("유효한 설정입니다"));
 
-    public void startSingleCrawling(Setting setting, User user) {
         CrawlWork crawlWork = CrawlWork.builder()
                 .setting(setting)
                 .startedBy(user)

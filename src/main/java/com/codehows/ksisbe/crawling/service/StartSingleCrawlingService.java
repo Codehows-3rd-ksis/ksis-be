@@ -64,7 +64,7 @@ public class StartSingleCrawlingService {
         WebDriver driver = null;
         try {
             driver = webDriverFactory.createDriver(setting.getUserAgent());
-            driver.get("https://exapmel.com1234");
+            driver.get(setting.getUrl());
 
             //크롤링 결과 수집
             Map<String, String> resultMap = collectResults(setting, driver);

@@ -1,6 +1,8 @@
 package com.codehows.ksisbe.crawlSetting;
 
+import com.codehows.ksisbe.crawlSetting.dto.DomRect;
 import com.codehows.ksisbe.crawlSetting.dto.HighlightResponse;
+import com.codehows.ksisbe.crawlSetting.dto.PreviewResponse;
 import io.github.bonigarcia.wdm.WebDriverManager;
 import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
@@ -96,72 +98,6 @@ public class CrawlService {
 
     }
 
-
-//    public Map<String, Object> captureFullPageWithHtml(String url) throws Exception {
-//        ChromeOptions options = new ChromeOptions();
-//        options.addArguments("--headless=new");
-//        options.addArguments("--no-sandbox");
-//        options.addArguments("--disable-dev-shm-usage");
-//        options.addArguments("--hide-scrollbars");
-//
-//        ChromeDriver driver = new ChromeDriver(options);
-//
-//        try {
-//            driver.get(url);
-//
-//            // 🚀 페이지 로드 및 안정화 대기 시간 충분히 부여
-//            Thread.sleep(3000);
-//
-//            JavascriptExecutor js = (JavascriptExecutor) driver;
-//
-//            // 애니메이션 멈춤 (렌더링 안정화에 도움)
-//            driver.executeCdpCommand("Animation.setPlaybackRate", Map.of("playbackRate", 0));
-//            // getLayoutMetrics 명령은 필요 없을 수 있으나, 명시적 호출로 레이아웃 확정을 유도
-//            driver.executeCdpCommand("Page.getLayoutMetrics", Map.of());
-//
-//            // 뷰포트 크기 설정
-//            int viewportWidth = 1920;
-//            int viewportHeight = 1080;
-//            Map<String, Object> metrics = new HashMap<>();
-//            metrics.put("width", viewportWidth);
-//            metrics.put("height", viewportHeight);
-//            metrics.put("deviceScaleFactor", 0);
-//            metrics.put("mobile", false);
-//            driver.executeCdpCommand("Emulation.setDeviceMetricsOverride", metrics);
-//
-//            // 🎯 캡처 직전에 다시 한번 최상단으로 스크롤 명령 및 대기
-//            js.executeScript("window.scrollTo(0,0)");
-//            Thread.sleep(1500);
-//
-//            // HTML 소스 가져오기
-//            String html = driver.getPageSource();
-//
-//            // CDP 명령어를 이용한 전체 페이지 스크린샷 캡처
-//            Map<String, Object> captureParams = new HashMap<>();
-//            captureParams.put("format", "png");
-//            captureParams.put("captureBeyondViewport", true);
-//            captureParams.put("fromSurface", true);
-//
-//            Map<String, Object> cdpResult = driver.executeCdpCommand("Page.captureScreenshot", captureParams);
-//
-//            // Base64 인코딩된 이미지 데이터를 바이트 배열로 디코딩
-//            String base64Image = (String) cdpResult.get("data");
-//            byte[] imageBytes = Base64.getDecoder().decode(base64Image);
-//
-//            BufferedImage img = ImageIO.read(new ByteArrayInputStream(imageBytes));
-//            System.out.println("Captured image size: " + img.getWidth() + "x" + img.getHeight());
-//
-//            // 결과 맵에 html과 이미지 넣기
-//            Map<String, Object> result = new HashMap<>();
-//            result.put("html", html);
-//            result.put("image", imageBytes);
-//
-//            return result;
-//
-//        } finally {
-//            driver.quit();
-//        }
-//    }
     private int toInt(Object value) {
         if (value instanceof Long) {
             return ((Long) value).intValue();
@@ -221,6 +157,144 @@ public class CrawlService {
         } finally {
             driver.quit();
         }
+    }
+
+    public Map<String, Object> captureFullPageWithHtml2(String url) throws Exception {
+        WebDriverManager.chromedriver().setup();
+        ChromeOptions options = new ChromeOptions();
+        options.addArguments("--headless=new");
+        options.addArguments("--no-sandbox");
+        options.addArguments("--disable-dev-shm-usage");
+        options.addArguments("--window-size=1920,1080");
+
+        ChromeDriver  driver = new ChromeDriver(options);
+
+        try {
+            driver.get(url);
+            Thread.sleep(3000);
+
+            JavascriptExecutor js = (JavascriptExecutor) driver;
+
+            // ✅ HTML 소스 추출
+            String html = driver.getPageSource();
+
+            // ✅ 페이지 전체 높이 계산
+            long scrollHeight = (Long) js.executeScript("return document.body.scrollHeight");
+
+            // ✅ 전체 스크린샷 병합
+            BufferedImage combined = new BufferedImage(1920, (int) scrollHeight, BufferedImage.TYPE_INT_RGB);
+            Graphics2D g2d = combined.createGraphics();
+
+            long scrolled = 0;
+            while (scrolled < scrollHeight) {
+
+                byte[] bytes = ((TakesScreenshot) driver).getScreenshotAs(OutputType.BYTES);
+                BufferedImage img = ImageIO.read(new java.io.ByteArrayInputStream(bytes));
+
+                int height = img.getHeight();
+
+                // 마지막 조각 자투리 처리
+                if (scrolled + height > scrollHeight) {
+                    height = (int) (scrollHeight - scrolled);
+                    img = img.getSubimage(0, img.getHeight() - height, img.getWidth(), height);
+                }
+
+                // 이어붙이기
+                g2d.drawImage(img, 0, (int) scrolled, null);
+
+                scrolled += height;
+
+                if (scrolled < scrollHeight) {
+                    js.executeScript("window.scrollTo(0, arguments[0]);", scrolled);
+                    Thread.sleep(500);
+                }
+            }
+
+            g2d.dispose();
+
+            // ✅ 이미지 바이트 변환
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            ImageIO.write(combined, "png", baos);
+            byte[] imageBytes = baos.toByteArray();
+
+            // ① 모든 DOM 노드의 좌표 가져오기
+            String script = """
+                function getCssSelector(el) {
+                    if (!el || el.nodeType !== 1) return null;
+
+                    const meaningfulClassList = ['t1', 'wrap1texts', 'unique-class-name'];
+
+                    const path = [];
+                    while (el && el.nodeType === 1) {
+                        let selector = el.tagName.toLowerCase();
+
+                        if (el.id) {
+                            selector += '#' + el.id;
+                            path.unshift(selector);
+                            break;
+                        }
+
+                        const classes = Array.from(el.classList);
+                        const meaningfulClasses = classes.filter(c => meaningfulClassList.includes(c));
+
+                        if (meaningfulClasses.length > 0) {
+                            selector += '.' + meaningfulClasses.join('.');
+                            path.unshift(selector);
+                            break;
+                        }
+
+                        // nth-of-type 계산
+                        let nth = 1;
+                        let sibling = el;
+                        while (sibling = sibling.previousElementSibling) {
+                            if (sibling.tagName === el.tagName) nth++;
+                        }
+                        selector += ':nth-of-type(' + nth + ')';
+
+                        path.unshift(selector);
+                        el = el.parentElement;
+                    }
+
+                    return path.join(' > ');
+                }
+
+                return Array.from(document.querySelectorAll('*')).map(el => {
+                    const r = el.getBoundingClientRect();
+                    return {
+                        selector: getCssSelector(el),
+                        x: r.x,
+                        y: r.y + window.pageYOffset,
+                        width: r.width,
+                        height: r.height
+                    };
+                });
+            """;
+
+            List<Map<String, Object>> rects = (List<Map<String, Object>>) js.executeScript(script);
+
+            // ---------- DTO 변환 ----------
+            List<DomRect> domRectList = rects.stream().map(m -> {
+                DomRect dr = new DomRect();
+                dr.setSelector((String) m.get("selector"));
+                dr.setX(((Number) m.get("x")).intValue());
+                dr.setY(((Number) m.get("y")).intValue());
+                dr.setWidth(((Number) m.get("width")).intValue());
+                dr.setHeight(((Number) m.get("height")).intValue());
+                return dr;
+            }).toList();
+
+            // ---------- 최종 반환 ----------
+            Map<String, Object> result = new HashMap<>();
+            result.put("html", html);
+            result.put("image", imageBytes);
+            result.put("domRects", domRectList);
+
+            return result;
+
+        } finally {
+            driver.quit();
+        }
+
     }
 
 }

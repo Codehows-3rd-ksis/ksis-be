@@ -2,6 +2,7 @@ package com.codehows.ksisbe.crawlSetting;
 
 import com.codehows.ksisbe.crawlSetting.dto.HighlightRequest;
 import com.codehows.ksisbe.crawlSetting.dto.HighlightResponse;
+import com.codehows.ksisbe.crawlSetting.dto.PreviewResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -41,5 +42,24 @@ public class CrawlController {
     @PostMapping("/highlight")
     public HighlightResponse getRect(@RequestBody HighlightRequest req) throws Exception {
         return crawlService.getRect(req.getUrl(), req.getCssSelector());
+    }
+
+    @PostMapping("/preview2")
+    public ResponseEntity<Map<String, Object>> previewPage2(@RequestBody Map<String, String> req) {
+        String url = req.get("url");
+
+        try {
+            Map<String, Object> data = crawlService.captureFullPageWithHtml2(url);
+
+            Map<String, Object> result = new HashMap<>();
+            result.put("image", Base64.getEncoder().encodeToString((byte[]) data.get("image")));
+            result.put("html", data.get("html"));
+            result.put("domRects", data.get("domRects")); // ★ 추가
+
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).body(null);
+        }
     }
 }

@@ -21,7 +21,7 @@ public class StartMultipleCrawlingService {
 
 
     @Transactional
-    public void startMultipleCrawling(Setting setting, User user) {
+    public void startMultipleCrawling(Long settingId, User user) {
 
 
 

@@ -63,7 +63,7 @@ public class CrawlWork {
     @Column(name = "create_at", nullable = false)
     private LocalDateTime createAt;
 
-    @Column(name = "update_at")
+    @Column(name = "update_at", nullable = false)
     private LocalDateTime updateAt;
 
     @Column(name = "is_delete", length = 1, nullable = false)

@@ -2,7 +2,6 @@ package com.codehows.ksisbe.crawlSetting;
 
 import com.codehows.ksisbe.crawlSetting.dto.DomRect;
 import com.codehows.ksisbe.crawlSetting.dto.HighlightResponse;
-import com.codehows.ksisbe.crawlSetting.dto.PreviewResponse;
 import io.github.bonigarcia.wdm.WebDriverManager;
 import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;

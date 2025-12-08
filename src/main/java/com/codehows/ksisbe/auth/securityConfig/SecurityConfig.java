@@ -38,6 +38,7 @@ public class SecurityConfig {
                         .requestMatchers("/profile").authenticated()
                         .requestMatchers("/preview").authenticated()
                         .requestMatchers("/robots").authenticated()
+                        .requestMatchers("/history/**").authenticated()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider), UsernamePasswordAuthenticationFilter.class);

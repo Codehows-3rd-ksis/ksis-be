@@ -2,9 +2,7 @@ package com.codehows.ksisbe.crawlSetting;
 
 import com.codehows.ksisbe.crawlSetting.dto.HighlightRequest;
 import com.codehows.ksisbe.crawlSetting.dto.HighlightResponse;
-import com.codehows.ksisbe.crawlSetting.dto.PreviewResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 

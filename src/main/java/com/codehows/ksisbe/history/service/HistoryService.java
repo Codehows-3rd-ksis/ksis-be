@@ -6,7 +6,11 @@ import com.codehows.ksisbe.history.dto.CrawlResultItemHistory;
 import com.codehows.ksisbe.history.dto.CrawlWorkHistory;
 import com.codehows.ksisbe.history.repository.CrawlResultItemHistoryRepository;
 import com.codehows.ksisbe.history.repository.CrawlWorkHistoryRepository;
+import com.codehows.ksisbe.user.User;
+import com.codehows.ksisbe.user.repository.UserRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -18,9 +22,21 @@ public class HistoryService {
 
     private final CrawlWorkHistoryRepository crawlWorkHistoryRepository;
     private final CrawlResultItemHistoryRepository crawlResultItemHistoryRepository;
+    private final UserRepository userRepository;
 
-    public List<CrawlWorkHistory> getAllCrawlWorkHistories() {
-        List<CrawlWork> crawlWorks = crawlWorkHistoryRepository.findAll();
+    // 관리자일 때 필터없이 모든이력 조회, 유저일 때는 자신의 것만 조회
+    @Transactional
+    public List<CrawlWorkHistory> findCrawlWorkHistories(String username) {
+        User user = userRepository.findByUsernameAndIsDelete(username, "N")
+                .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다: " + username));
+
+        List<CrawlWork> crawlWorks;
+        if ("ROLE_ADMIN".equals(user.getRole())) {
+            crawlWorks = crawlWorkHistoryRepository.findByIsDelete("N");
+        } else {
+            crawlWorks = crawlWorkHistoryRepository.findByUserId(user.getId());
+        }
+
 
         // CrawlWork 엔티티 리스트를 CrawlWorkHistory DTO 리스트로 변환
         return crawlWorks.stream()
@@ -39,11 +55,13 @@ public class HistoryService {
                 .startedBy(entity.getStartedBy() != null ? entity.getStartedBy().getId() : null)
                 .failCount(entity.getFailCount() != null ? entity.getFailCount().longValue() : 0L)
                 .state(entity.getState())
+                .type(entity.getType())
                 .startAt(entity.getStartAt())
                 .endAt(entity.getEndAt())
                 .build();
     }
 
+    // input(workId)를 물고있는 resultItem을 조회
     public List<CrawlResultItemHistory> getSelectedWorkResults(Long workId) {
         List<CrawlResultItem> crawlResults = crawlResultItemHistoryRepository.findByCrawlWork_WorkId(workId);
 
@@ -61,5 +79,14 @@ public class HistoryService {
                 .seq(entity.getSeq())
                 .state(entity.getState())
                 .build();
+    }
+
+    // setting_id 안의 user_id가 input과 같은 값들을 조회 : 사용자 이력조회로 사용
+    public List<CrawlWorkHistory> findByUserId(Long userId) {
+        List<CrawlWork> works = crawlWorkHistoryRepository.findByUserId(userId);
+
+        return works.stream()
+                .map(this::toDto)
+                .collect(Collectors.toList());
     }
 }

@@ -19,6 +19,7 @@ public class CrawlWorkHistory {
     private Long startedBy;
     private Long failCount;
     private String state;
+    private String type;
     private LocalDateTime startAt;
     private LocalDateTime endAt;
 }

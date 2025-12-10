@@ -88,7 +88,7 @@ public class ExtractDetailUrlsMulti {
     private boolean clickpageNumber(WebDriver driver, String pagingAreaSelector, int pageNum) {
         try {
             WebElement pagingArea = driver.findElement(By.cssSelector(pagingAreaSelector));
-            List<WebElement> pagebuttons = pagingArea.findElements(By.cssSelector("a"));
+            List<WebElement> pagebuttons = pagingArea.findElements(By.cssSelector("a, strong"));
             for (WebElement btn : pagebuttons) {
                 if (btn.getText().equals(String.valueOf(pageNum))) {
                     btn.click();

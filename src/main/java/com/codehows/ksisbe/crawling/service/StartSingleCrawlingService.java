@@ -40,7 +40,7 @@ public class StartSingleCrawlingService {
         CrawlWork crawlWork = CrawlWork.builder()
                 .setting(setting)
                 .startedBy(user)
-                .type("단일")
+                .type("수동실행")
                 .state("RUNNING")
                 .failCount(0)
                 .totalCount(1)

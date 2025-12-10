@@ -54,6 +54,9 @@ public class CrawlWork {
     @Column(name = "expect_end_at")
     private LocalDateTime expectEndAt;
 
+    @Column(name = "progress")//20251209 추가
+    private Double progress;
+
     @Column(name = "start_at")
     private LocalDateTime startAt;
 

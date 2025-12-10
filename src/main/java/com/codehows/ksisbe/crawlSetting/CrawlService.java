@@ -6,6 +6,8 @@ import io.github.bonigarcia.wdm.WebDriverManager;
 import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
@@ -14,6 +16,7 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.time.Duration;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
@@ -95,67 +98,6 @@ public class CrawlService {
             driver.quit();
         }
 
-    }
-
-    private int toInt(Object value) {
-        if (value instanceof Long) {
-            return ((Long) value).intValue();
-        }
-        if (value instanceof Double) {
-            return ((Double) value).intValue();
-        }
-        throw new IllegalArgumentException("Unexpected JS return type: " + value.getClass());
-    }
-
-    public HighlightResponse getRect(String url, String cssSelector) throws Exception {
-
-        ChromeOptions options = new ChromeOptions();
-        options.addArguments("--headless=new");
-        options.addArguments("--no-sandbox");
-        options.addArguments("--disable-dev-shm-usage");
-        options.addArguments("--window-size=1920,1080");
-
-        WebDriver driver = new ChromeDriver(options);
-
-        try {
-            driver.get(url);
-            Thread.sleep(2000);
-
-            JavascriptExecutor js = (JavascriptExecutor) driver;
-            js.executeScript("window.scrollTo(0, 0);");
-            Thread.sleep(500);
-
-            // ✅ 페이지 전체 높이 계산
-            long scrollHeight = (Long) js.executeScript("return document.body.scrollHeight");
-
-            // --- element 찾기 ---
-            WebElement element = driver.findElement(By.cssSelector(cssSelector));
-
-            // DOM 기준 boundingClientRect
-            Object rectX = js.executeScript("return arguments[0].getBoundingClientRect().x;", element);
-            Object rectY = js.executeScript("return arguments[0].getBoundingClientRect().y;", element);
-            Object rectW = js.executeScript("return arguments[0].getBoundingClientRect().width;", element);
-            Object rectH = js.executeScript("return arguments[0].getBoundingClientRect().height;", element);
-
-            // ★ 전체 페이지 기준 절대 좌표로 변환
-            // 이유: boundingClientRect.y 는 "현재 뷰포트 내" 위치이기 때문에 스크롤량을 더해줘야 함
-            Object absoluteY = js.executeScript(
-                    "return window.pageYOffset + arguments[0].getBoundingClientRect().top;",
-                    element
-            );
-
-            // Rect 결과 구성
-            HighlightResponse res = new HighlightResponse();
-            res.setX(toInt(rectX));
-            res.setY(toInt(absoluteY));
-            res.setWidth(toInt(rectW));
-            res.setHeight(toInt(rectH));
-
-            return res;
-
-        } finally {
-            driver.quit();
-        }
     }
 
     public Map<String, Object> captureFullPageWithHtml2(String url) throws Exception {
@@ -296,4 +238,45 @@ public class CrawlService {
 
     }
 
+
+    public String extractDetailUrl(String url, String listAreaSelector, String detailLinkSelector) throws Exception {
+
+        WebDriverManager.chromedriver().setup();
+        ChromeOptions options = new ChromeOptions();
+        options.addArguments("--headless=new", "--no-sandbox", "--disable-dev-shm-usage", "--window-size=1920,1080");
+
+        ChromeDriver driver = new ChromeDriver(options);
+
+        try {
+            driver.get(url);
+            Thread.sleep(2000);
+
+            WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+
+            // 리스트 영역
+            WebElement listArea = wait.until(
+                    ExpectedConditions.presenceOfElementLocated(By.cssSelector(listAreaSelector))
+            );
+
+            // 상세 링크
+            WebElement link = listArea.findElement(By.cssSelector(detailLinkSelector));
+
+            String originalWindow = driver.getWindowHandle();
+            link.click();
+            Thread.sleep(1500);
+
+            // 새 창 처리
+            for (String win : driver.getWindowHandles()) {
+                if (!win.equals(originalWindow)) {
+                    driver.switchTo().window(win);
+                }
+            }
+
+            // 최종 상세 페이지 URL
+            return driver.getCurrentUrl();
+
+        } finally {
+            driver.quit();
+        }
+    }
 }

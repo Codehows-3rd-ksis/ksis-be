@@ -73,7 +73,7 @@ public class ExtractDetailUrlsMulti {
     private boolean isPageNumberVisible(WebDriver driver, String pagingAreaSelector, int pageNum) {
         try {
             WebElement pagingArea = driver.findElement(By.cssSelector(pagingAreaSelector));
-            List<WebElement> pageButtons = pagingArea.findElements(By.tagName("a"));
+            List<WebElement> pageButtons = pagingArea.findElements(By.tagName("a, strong, span, button, li"));
             for (WebElement btn : pageButtons) {
                 if (btn.getText().equals(String.valueOf(pageNum))) {
                     return btn.isDisplayed();
@@ -88,7 +88,7 @@ public class ExtractDetailUrlsMulti {
     private boolean clickpageNumber(WebDriver driver, String pagingAreaSelector, int pageNum) {
         try {
             WebElement pagingArea = driver.findElement(By.cssSelector(pagingAreaSelector));
-            List<WebElement> pagebuttons = pagingArea.findElements(By.cssSelector("a, strong"));
+            List<WebElement> pagebuttons = pagingArea.findElements(By.cssSelector("a, strong, span, button, li"));
             for (WebElement btn : pagebuttons) {
                 if (btn.getText().equals(String.valueOf(pageNum))) {
                     btn.click();

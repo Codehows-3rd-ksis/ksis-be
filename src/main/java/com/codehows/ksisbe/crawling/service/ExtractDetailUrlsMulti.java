@@ -52,13 +52,6 @@ public class ExtractDetailUrlsMulti {
                     if (currentPageNum > maxPage) {
                         break;
                     }
-                    if (!isPageNumberVisible(driver, pagingArea, currentPageNum)) {
-                        if (clickNextButton(driver, pagingNextbtn)) {
-                            waitForPageLoad(driver, setting);
-                        } else {
-                            hasNextPagingGroup = false;
-                        }
-                    }
                 }
         }
         return detailUrls;

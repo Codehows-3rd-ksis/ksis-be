@@ -15,8 +15,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ExtractDetailUrlsMulti {
 
-    private WebDriver driver;
-    private SettingRepository settingRepository;
+    private final SettingRepository settingRepository;
 
     protected List<String> extractDetailUrls(WebDriver driver, Setting setting) {
         List<String> detailUrls = new ArrayList<>();
@@ -53,6 +52,41 @@ public class ExtractDetailUrlsMulti {
                         break;
                     }
                 }
+                break;
+            case "Next_Btn":
+                boolean hasNextPage = true;
+                while (hasNextPage) {
+                    detailUrls.addAll(extractLinksFromListArea(driver, listArea, linkArea));
+
+                    if (clickNextButton(driver, pagingNextbtn)) {
+                        waitForPageLoad(driver, setting);
+                    } else {
+                        hasNextPage = false;
+                    }
+                }
+                break;
+            case "AJAX":
+                int currentAjaxPage = 1;
+                while (currentAjaxPage <= maxPage) {
+                    detailUrls.addAll(extractLinksFromListArea(driver, listArea, linkArea));
+
+                    if (pagingNextbtn != null && !pagingNextbtn.isEmpty()) {
+                        // 다음 AJAX 버튼 클릭
+                        if (clickNextButton(driver, pagingNextbtn)) {
+                            waitForAjaxLoad(driver, setting);
+                        } else {
+                            break;
+                        }
+                    } else {
+                        // 버튼이 없으면 스크롤 방식 등, 필요시 구현
+                        // 예시: 스크롤 후 기다림
+                        ((JavascriptExecutor) driver).executeScript("window.scrollTo(0, document.body.scrollHeight);");
+                        waitForAjaxLoad(driver, setting);
+                    }
+
+                    currentAjaxPage++;
+                }
+                break;
         }
         return detailUrls;
     }
@@ -63,19 +97,17 @@ public class ExtractDetailUrlsMulti {
                         .executeScript("return document.readyState").equals("complete"));
     }
 
-    private boolean isPageNumberVisible(WebDriver driver, String pagingAreaSelector, int pageNum) {
-        try {
-            WebElement pagingArea = driver.findElement(By.cssSelector(pagingAreaSelector));
-            List<WebElement> pageButtons = pagingArea.findElements(By.tagName("a, strong, span, button, li"));
-            for (WebElement btn : pageButtons) {
-                if (btn.getText().equals(String.valueOf(pageNum))) {
-                    return btn.isDisplayed();
-                }
+    private void waitForAjaxLoad(WebDriver driver, Setting setting) {
+        new WebDriverWait(driver, Duration.ofSeconds(setting.getRate())).until(webDriver -> {
+            try {
+                Object active = ((JavascriptExecutor) webDriver)
+                        .executeScript("return (typeof jQuery !== 'undefined') ? jQuery.active : 0");
+                return active instanceof Long && (Long) active == 0L;
+            } catch (Exception e) {
+                // jQuery가 없으면 바로 true로 처리
+                return true;
             }
-        } catch (NoSuchElementException e) {
-            return false;
-        }
-        return false;
+        });
     }
 
     private boolean clickpageNumber(WebDriver driver, String pagingAreaSelector, int pageNum) {
@@ -132,9 +164,32 @@ public class ExtractDetailUrlsMulti {
                 List<WebElement> found = listRoot.findElements(selector);
                 if (!found.isEmpty()) {
                     for (WebElement el : found) {
-                        String url = el.getAttribute("href");
-                        if (url != null && !url.isEmpty()) {
-                            links.add(url);
+                        try {
+                            // 현재 페이지 URL 저장 (원래 페이지)
+                            String originalUrl = driver.getCurrentUrl();
+
+                            // 링크 클릭
+                            el.click();
+
+                            // 페이지 로드 대기 (예: 명시적 대기 사용)
+                            WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+                            wait.until(webDriver -> !webDriver.getCurrentUrl().equals(originalUrl));
+
+                            // 현재 URL 가져오기
+                            String currentUrl = driver.getCurrentUrl();
+//                            System.out.println("URL :" + currentUrl);
+                            links.add(currentUrl);
+
+                            // 다시 원래 페이지로 돌아가기
+                            driver.navigate().back();
+
+                            // 원래 페이지 로드 대기 (필요시)
+                            wait.until(webDriver -> webDriver.getCurrentUrl().equals(originalUrl));
+
+                            // 다시 listRoot, found 요소를 찾는 등 필요한 작업 추가 가능
+
+                        } catch (Exception e) {
+                            System.out.println("Click and get URL error: " + e.getMessage());
                         }
                     }
                     // 처음으로 발견된 우선순위만 사용하도록 break

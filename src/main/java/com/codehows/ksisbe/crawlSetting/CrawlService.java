@@ -279,4 +279,160 @@ public class CrawlService {
             driver.quit();
         }
     }
+
+    public Map<String, Object> captureDetailPage(WebDriver driver, WebElement linkEl) throws Exception {
+
+        JavascriptExecutor js = (JavascriptExecutor) driver;
+
+        // 클릭 가능한 위치로 스크롤
+        js.executeScript("arguments[0].scrollIntoView(true);", linkEl);
+        Thread.sleep(300);
+
+        // 현재 URL (변화 감지용)
+        String before = driver.getCurrentUrl();
+
+        // 클릭
+        try {
+            linkEl.click();
+        } catch (Exception e) {
+            js.executeScript("arguments[0].click();", linkEl);
+        }
+
+        Thread.sleep(1500); // ajax / 해시 라우팅 대기
+
+        String after = driver.getCurrentUrl();
+
+        // -------------------------
+        // 여기서 URL 변화 여부는 중요하지 않음
+        // 중요한 것은 현재 DOM이 상세페이지인지 여부
+        // -------------------------
+
+        // HTML
+        String html = driver.getPageSource();
+
+        // 전체 스크린샷 캡처 (기존 captureFullPageWithHtml2 로직 포함)
+        byte[] screenshot = captureFullPageScreenshot(driver);
+
+        // DOM Rect 추출
+        List<DomRect> rects = extractDomRects(driver);
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("html", html);
+        result.put("image", screenshot);
+        result.put("domRects", rects);
+        result.put("detailUrl", after); // 부가 정보
+
+        return result;
+    }
+
+    private byte[] captureFullPageScreenshot(WebDriver driver) throws Exception {
+
+        JavascriptExecutor js = (JavascriptExecutor) driver;
+
+        long scrollHeight = (Long) js.executeScript("return document.body.scrollHeight");
+
+        BufferedImage combined = new BufferedImage(1920, (int) scrollHeight, BufferedImage.TYPE_INT_RGB);
+        Graphics2D g2d = combined.createGraphics();
+
+        long scrolled = 0;
+        while (scrolled < scrollHeight) {
+            byte[] bytes = ((TakesScreenshot) driver).getScreenshotAs(OutputType.BYTES);
+            BufferedImage img = ImageIO.read(new java.io.ByteArrayInputStream(bytes));
+            int imgHeight = img.getHeight();
+
+            if (scrolled + imgHeight > scrollHeight) {
+                imgHeight = (int) (scrollHeight - scrolled);
+                img = img.getSubimage(0, img.getHeight() - imgHeight, img.getWidth(), imgHeight);
+            }
+
+            g2d.drawImage(img, 0, (int) scrolled, null);
+            scrolled += imgHeight;
+
+            if (scrolled < scrollHeight) {
+                js.executeScript("window.scrollTo(0, arguments[0]);", scrolled);
+                Thread.sleep(300);
+            }
+        }
+
+        g2d.dispose();
+
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        ImageIO.write(combined, "png", baos);
+        return baos.toByteArray();
+    }
+
+    private List<DomRect> extractDomRects(WebDriver driver) {
+        JavascriptExecutor js = (JavascriptExecutor) driver;
+
+        String script = """
+                function getCssSelector(el) {
+                    if (!el || el.nodeType !== 1) return null;
+
+                    const meaningfulClassList = ['t1', 'wrap1texts', 'unique-class-name'];
+
+                    const path = [];
+                    while (el && el.nodeType === 1) {
+                        let selector = el.tagName.toLowerCase();
+
+                        if (el.id) {
+                            selector += '#' + el.id;
+                            path.unshift(selector);
+                            break;
+                        }
+
+                        const classes = Array.from(el.classList);
+                        const meaningfulClasses = classes.filter(c => meaningfulClassList.includes(c));
+
+                        if (meaningfulClasses.length > 0) {
+                            selector += '.' + meaningfulClasses.join('.');
+                            path.unshift(selector);
+                            break;
+                        }
+
+                        // nth-of-type 계산
+                        let nth = 1;
+                        let sibling = el;
+                        while (sibling = sibling.previousElementSibling) {
+                            if (sibling.tagName === el.tagName) nth++;
+                        }
+                        selector += ':nth-of-type(' + nth + ')';
+
+                        path.unshift(selector);
+                        el = el.parentElement;
+                    }
+
+                    return path.join(' > ');
+                }
+
+                return Array.from(document.querySelectorAll('*')).map(el => {
+                    const r = el.getBoundingClientRect();
+                    return {
+                        selector: getCssSelector(el),
+                        x: r.x,
+                        y: r.y + window.pageYOffset,
+                        width: r.width,
+                        height: r.height
+                    };
+                });
+            """;
+
+        List<Map<String, Object>> rects = (List<Map<String, Object>>) js.executeScript(script);
+
+        return rects.stream().map(m -> {
+            DomRect dr = new DomRect();
+            dr.setSelector((String) m.get("selector"));
+            dr.setX(((Number) m.get("x")).intValue());
+            dr.setY(((Number) m.get("y")).intValue());
+            dr.setWidth(((Number) m.get("width")).intValue());
+            dr.setHeight(((Number) m.get("height")).intValue());
+            return dr;
+        }).toList();
+    }
+
+    public WebDriver createDriver() {
+        WebDriverManager.chromedriver().setup();
+        ChromeOptions options = new ChromeOptions();
+        options.addArguments("--headless=new", "--no-sandbox", "--disable-dev-shm-usage", "--window-size=1920,1080");
+        return new ChromeDriver(options);
+    }
 }

@@ -3,9 +3,15 @@ package com.codehows.ksisbe.crawlSetting;
 import com.codehows.ksisbe.crawlSetting.dto.HighlightRequest;
 import com.codehows.ksisbe.crawlSetting.dto.HighlightResponse;
 import lombok.RequiredArgsConstructor;
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.Duration;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
@@ -63,27 +69,46 @@ public class CrawlController {
         String listAreaSelector = req.get("listArea");
         String detailLinkSelector = req.get("linkArea");
 
-        try {
+        WebDriver driver = null;
 
-            // 1) 상세페이지 URL만 가져오기
-            String detailUrl = crawlService.extractDetailUrl(
-                    url, listAreaSelector, detailLinkSelector
+        try {
+            // 1) 드라이버 생성
+            driver = crawlService.createDriver();
+            driver.get(url);
+            Thread.sleep(1000);
+
+            WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+
+            // 2) 리스트 영역 찾기
+            WebElement listRoot = wait.until(
+                    ExpectedConditions.presenceOfElementLocated(By.cssSelector(listAreaSelector))
             );
 
-            // 2) 해당 상세페이지 미리보기 생성
-            Map<String, Object> data = crawlService.captureFullPageWithHtml2(detailUrl);
+            // 3) 리스트 내부의 상세링크 대표 a태그 찾기 (linkArea는 이걸 의미함)
+            WebElement linkEl = listRoot.findElement(By.cssSelector(detailLinkSelector));
 
-            // 3) Base64 변환 + 결과 조립
+            if (linkEl == null) {
+                return ResponseEntity.status(404)
+                        .body(Map.of("error", "linkArea로 지정한 상세 링크 요소를 찾을 수 없습니다."));
+            }
+
+            // 4) 상세페이지로 이동 후 캡처
+            Map<String, Object> data = crawlService.captureDetailPage(driver, linkEl);
+
+            // 5) Base64 변환
             Map<String, Object> result = new HashMap<>();
             result.put("image", Base64.getEncoder().encodeToString((byte[]) data.get("image")));
             result.put("html", data.get("html"));
             result.put("domRects", data.get("domRects"));
+            result.put("detailUrl", data.get("detailUrl"));
 
             return ResponseEntity.ok(result);
 
         } catch (Exception e) {
             e.printStackTrace();
-            return ResponseEntity.status(500).body(null);
+            return ResponseEntity.status(500).body(Map.of("error", e.getMessage()));
+        } finally {
+            if (driver != null) driver.quit();
         }
     }
 }

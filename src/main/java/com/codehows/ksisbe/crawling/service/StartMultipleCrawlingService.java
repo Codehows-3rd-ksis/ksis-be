@@ -73,6 +73,7 @@ public class StartMultipleCrawlingService {
             int seq = 1;
             int failCount = 0;
             int totalCount = detailUrls.size();
+//            int collectCount = 0;
 
             for (String detailUrl : detailUrls) {
                 try {
@@ -85,6 +86,7 @@ public class StartMultipleCrawlingService {
                     crawlingFailService.saveFailedResultMulti(crawlWork.getWorkId(), detailUrl, (long) seq);
                 } finally {
                     incrementCollectCount(crawlWork);
+//                    collectCount++;
                     updateCollectProgress(crawlWork, failCount, totalCount);
                     seq++;
                 }
@@ -138,6 +140,29 @@ public class StartMultipleCrawlingService {
         crawlWork.setFailCount(failCount);
         crawlWork.setTotalCount(totalCount);
         crawlWork.setUpdateAt(LocalDateTime.now());
+
+        LocalDateTime now = LocalDateTime.now();
+
+
+        // 경과 시간 (초)
+        long elapsedSeconds = java.time.Duration.between(crawlWork.getStartAt(), now).getSeconds();
+
+        if (collectCount > 0) {  // 0일 때는 나누기 불가 → null 유지
+            // 평균 처리 속도 (초/건)
+            double avgSpeed = (double) elapsedSeconds / collectCount;
+
+            // 남은 건수
+            int remainingCount = totalCount - collectCount;
+
+            // 예상 남은 시간(초)
+            long estimatedRemainSeconds = (long) (remainingCount * avgSpeed);
+
+            // 예상 완료 시간
+            LocalDateTime expectEndAt = now.plusSeconds(estimatedRemainSeconds);
+            crawlWork.setExpectEndAt(expectEndAt);
+        }
+
+        crawlWork.setUpdateAt(now);
 
         crawlWorkRepository.save(crawlWork);
     }

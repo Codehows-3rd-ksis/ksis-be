@@ -1,38 +1,57 @@
 # 빌드 스테이지
 FROM gradle:8.5-jdk21 AS builder
-# Maven 사용 시: FROM maven:3.9-eclipse-temurin-17 AS builder
 
 WORKDIR /app
 
-# Gradle 사용 시
-COPY build.gradle settings.gradle ./
+COPY build.gradle settings.settings.gradle ./
 COPY gradle gradle
 COPY gradlew ./
 
-# gradlew 실행 권한 부여
 RUN chmod +x ./gradlew
-
 RUN ./gradlew dependencies --no-daemon
 
-# Maven 사용 시 (위 4줄 대신 아래 2줄 사용)
-# COPY pom.xml ./
-# RUN mvn dependency:go-offline
-
-# 소스 코드 복사 및 빌드
 COPY src ./src
-
-# Gradle 빌드
 RUN chmod +x ./gradlew && ./gradlew bootJar --no-daemon
-# Maven 빌드 시: RUN mvn clean package -DskipTests
 
-# 런타임 스테이지
+# 런타임 스테이지 (Selenium용 Chrome 포함)
 FROM eclipse-temurin:21-jre-alpine
+
+# Chrome 및 의존성 설치
+RUN apk update && apk add --no-cache \
+    chromium \
+    nss \
+    freetype \
+    freetype-dev \
+    harfbuzz \
+    ca-certificates \
+    ttf-freefont \
+    nodejs \
+    yarn \
+    && rm -rf /var/cache/apk/*
+
+# ChromeDriver 설치
+ENV CHROME_VERSION=$(curl -sSL "http://dl-cdn.alpinelinux.org/alpine/v3.19/main/x86_64/APKINDEX.tar.gz" | tar -xz -C /tmp && \
+    grep -w "chromium" /tmp/APKINDEX.tar.gz | grep -o "P:[0-9]*" | head -1 | cut -d: -f2 | xargs apk info -r chromium | grep Version | cut -d' ' -f3 | cut -d'-' -f1) \
+    CHROMEDRIVER_VERSION=120.0.6099.109  # 최신 버전 확인 후 업데이트
+
+RUN wget -q --continue -P /tmp "https://edgedl.me.gvt1.com/edgedl/chrome/chrome-for-testing/${CHROMEDRIVER_VERSION}/linux64/chromedriver-linux64.zip" && \
+    unzip /tmp/chromedriver-linux64.zip -d /usr/local/bin/ && \
+    mv /usr/local/bin/chromedriver-linux64/chromedriver /usr/local/bin/chromedriver && \
+    chmod +x /usr/local/bin/chromedriver && \
+    rm /tmp/chromedriver-linux64.zip /tmp/APKINDEX.tar.gz
 
 WORKDIR /app
 
 # 빌드된 JAR 파일 복사
 COPY --from=builder /app/build/libs/*.jar app.jar
-# Maven 빌드 시: COPY --from=builder /app/target/*.jar app.jar
+
+# Selenium 환경변수 설정
+ENV CHROME_BIN=/usr/bin/chromium-browser \
+    CHROME_PATH=/usr/bin/chromium-browser \
+    GOOGLE_CHROME_BIN=/usr/bin/chromium-browser \
+    CHROMEDRIVER_PATH=/usr/local/bin/chromedriver \
+    DISPLAY="" \
+    WINDOW_SIZE="1920,1080"
 
 # 포트 노출
 EXPOSE 8080
@@ -40,5 +59,7 @@ EXPOSE 8080
 # 환경변수 설정
 ENV JAVA_OPTS="-Xms512m -Xmx1024m"
 
-# 애플리케이션 실행
-ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]
+# Chrome 실행 시 headless 옵션 기본 제공
+ENV SELENIUM_ARGS="--headless --no-sandbox --disable-dev-shm-usage --disable-gpu --disable-extensions --no-first-run --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-renderer-backgrounding --disable-features=TranslateUI --disable-ipc-flooding-protection"
+
+ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -Dwebdriver.chrome.driver=/usr/local/bin/chromedriver -Dchrome.binary=/usr/bin/chromium-browser -jar app.jar"]

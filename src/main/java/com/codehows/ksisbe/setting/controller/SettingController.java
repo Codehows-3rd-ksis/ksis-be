@@ -1,5 +1,6 @@
 package com.codehows.ksisbe.setting.controller;
 
+import com.codehows.ksisbe.query.dto.CustomPageResponse;
 import com.codehows.ksisbe.query.dto.SearchCondition;
 import com.codehows.ksisbe.setting.dto.ConditionsShowDto;
 import com.codehows.ksisbe.setting.dto.SettingRequestDto;
@@ -58,7 +59,13 @@ public class SettingController {
         try {
             String username = authentication.getName();
             Page<SettingShowDto> result = settingService.findSetting(username, condition, pageable);
-            return ResponseEntity.ok(result);
+            return ResponseEntity.ok(new CustomPageResponse<>(
+                    result.getContent(),
+                    result.getNumber(),
+                    result.getSize(),
+                    result.getTotalElements(),
+                    result.getTotalPages()
+            ));
 
         } catch (UsernameNotFoundException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)

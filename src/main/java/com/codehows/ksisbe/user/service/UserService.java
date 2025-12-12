@@ -1,6 +1,7 @@
 package com.codehows.ksisbe.user.service;
 
 import com.codehows.ksisbe.user.User;
+import com.codehows.ksisbe.user.dto.UserAccountUpdateRequest;
 import com.codehows.ksisbe.user.dto.UserRegisterRequest;
 import com.codehows.ksisbe.user.dto.UserUpdateRequest;
 import com.codehows.ksisbe.user.repository.UserRepository;
@@ -42,12 +43,22 @@ public class UserService {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다: " + id));
 
-        user.setUsername(dto.getUsername());
-        user.setPassword(dto.getPassword());
         user.setName(dto.getName());
         user.setDept(dto.getDept());
         user.setRanks(dto.getRanks());
         user.setState(dto.getState());
+        user.setUpdateAt(LocalDateTime.now());
+
+
+        userRepository.save(user);
+    }
+
+    public void updateUserAccount(Long id, UserAccountUpdateRequest dto) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다: " + id));
+
+        user.setUsername(dto.getUsername());
+        user.setPassword(dto.getPassword());
         user.setUpdateAt(LocalDateTime.now());
 
         if (dto.getPassword() != null && !dto.getPassword().isBlank()) {

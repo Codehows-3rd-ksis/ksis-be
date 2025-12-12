@@ -1,10 +1,7 @@
 package com.codehows.ksisbe.user.controller;
 
 import com.codehows.ksisbe.user.User;
-import com.codehows.ksisbe.user.dto.UserProfileResponse;
-import com.codehows.ksisbe.user.dto.UserRegisterRequest;
-import com.codehows.ksisbe.user.dto.UserShowResponse;
-import com.codehows.ksisbe.user.dto.UserUpdateRequest;
+import com.codehows.ksisbe.user.dto.*;
 import com.codehows.ksisbe.user.repository.UserRepository;
 import com.codehows.ksisbe.user.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -72,9 +69,15 @@ public class UserController {
     }
     
     //관리자 유저수정
-    @PutMapping("/user/{id}")
+    @PutMapping("/userInfo/{id}")
     public ResponseEntity<?> updateUser(@PathVariable Long id, @RequestBody UserUpdateRequest dto) {
         userService.updateUser(id, dto);
+        return ResponseEntity.ok("수정완료");
+    }
+    //관리자 유저수정조회
+    @PutMapping("/userAccount/{id}")
+    public ResponseEntity<?> updateUserAccount(@PathVariable Long id, @RequestBody UserAccountUpdateRequest dto) {
+        userService.updateUserAccount(id, dto);
         return ResponseEntity.ok("수정완료");
     }
 

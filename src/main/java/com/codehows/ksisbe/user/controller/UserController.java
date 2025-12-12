@@ -1,17 +1,19 @@
 package com.codehows.ksisbe.user.controller;
 
+import com.codehows.ksisbe.query.dto.CustomPageResponse;
+import com.codehows.ksisbe.query.dto.SearchCondition;
 import com.codehows.ksisbe.user.User;
 import com.codehows.ksisbe.user.dto.*;
 import com.codehows.ksisbe.user.repository.UserRepository;
+import com.codehows.ksisbe.user.repository.UserRepositoryImpl;
 import com.codehows.ksisbe.user.service.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 @RestController
 @RequiredArgsConstructor
@@ -19,6 +21,7 @@ public class UserController {
 
     private final UserService userService;
     private final UserRepository userRepository;
+    private final UserRepositoryImpl userRepositoryImpl;
 
     //관리자 유저등록
     @PostMapping("/user")
@@ -48,24 +51,34 @@ public class UserController {
 
     //관리자 유저조회
     @GetMapping("/user")
-    public ResponseEntity<List<UserShowResponse>> findAllUsers() {
-        List<User> users = userRepository.findAllByIsDeleteAndRoleNot("N", "ROLE_ADMIN");
+    public ResponseEntity<?> findAllUsers(
+            @ModelAttribute SearchCondition condition, Pageable pageable){
+
+        Page<User> users = userRepositoryImpl.search(condition, pageable);
 
 
-        List<UserShowResponse> findList = users.stream()
-                .map(user -> UserShowResponse.builder()
-                        .userId(user.getId())
-                        .username(user.getUsername())
-                        .role(user.getRole())
-                        .name(user.getName())
-                        .dept(user.getDept())
-                        .ranks(user.getRanks())
-                        .loginAt(user.getLoginAt())
-                        .state(user.getState())
-                        .build())
-                .collect(Collectors.toList());
+        Page<UserShowResponse> result = users.map(user -> UserShowResponse.builder()
+                .userId(user.getId())
+                .username(user.getUsername())
+                .role(user.getRole())
+                .name(user.getName())
+                .dept(user.getDept())
+                .ranks(user.getRanks())
+                .loginAt(user.getLoginAt())
+                .state(user.getState())
+                .build()
+        );
 
-        return ResponseEntity.ok(findList);
+        CustomPageResponse<UserShowResponse> response =
+                new CustomPageResponse<>(
+                        result.getContent(),
+                        result.getNumber(),
+                        result.getSize(),
+                        result.getTotalElements(),
+                        result.getTotalPages()
+                );
+
+        return ResponseEntity.ok(response);
     }
     
     //관리자 유저수정

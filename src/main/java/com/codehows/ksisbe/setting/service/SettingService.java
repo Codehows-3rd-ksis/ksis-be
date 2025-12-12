@@ -1,5 +1,6 @@
 package com.codehows.ksisbe.setting.service;
 
+import com.codehows.ksisbe.query.dto.SearchCondition;
 import com.codehows.ksisbe.setting.dto.*;
 import com.codehows.ksisbe.setting.entity.Conditions;
 import com.codehows.ksisbe.setting.entity.Setting;
@@ -8,6 +9,8 @@ import com.codehows.ksisbe.setting.repository.SettingRepository;
 import com.codehows.ksisbe.user.User;
 import com.codehows.ksisbe.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
@@ -16,7 +19,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -84,35 +86,33 @@ public class SettingService {
 
     //설정조회
     @Transactional(readOnly = true)
-    public List<SettingShowDto> findSetting(String username) {
+    public Page<SettingShowDto> findSetting(String username, SearchCondition condition, Pageable pageable) {
         User user = userRepository.findByUsernameAndIsDelete(username, "N")
                 .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다: " + username));
 
-        List<Setting> settings;
+        Page<Setting> page = settingRepository.search(
+                user.getId(),
+                user.getRole(),
+                condition,
+                pageable
+        );
 
-        if ("ROLE_ADMIN".equals(user.getRole())) {
-            settings = settingRepository.findByIsDelete("N");
-        } else {
-            settings = settingRepository.findByUserIdAndIsDelete(user.getId(),"N");
-        }
-
-        return settings.stream()
-                .map(setting -> SettingShowDto.builder()
-                        .settingId(setting.getSettingId())
-                        .userId(setting.getUser().getId())
-                        .settingName(setting.getSettingName())
-                        .url(setting.getUrl())
-                        .type(setting.getType())
-                        .userAgent(setting.getUserAgent())
-                        .rate(setting.getRate())
-                        .listArea(setting.getListArea())
-                        .pagingType(setting.getPagingType())
-                        .pagingArea(setting.getPagingArea())
-                        .pagingNextbtn(setting.getPagingNextbtn())
-                        .maxPage(setting.getMaxPage())
-                        .linkArea(setting.getLinkArea())
-                        .build())
-                .toList();
+        return page.map(setting -> SettingShowDto.builder()
+                .settingId(setting.getSettingId())
+                .userId(setting.getUser().getId())
+                .settingName(setting.getSettingName())
+                .url(setting.getUrl())
+                .type(setting.getType())
+                .userAgent(setting.getUserAgent())
+                .rate(setting.getRate())
+                .listArea(setting.getListArea())
+                .pagingType(setting.getPagingType())
+                .pagingArea(setting.getPagingArea())
+                .pagingNextbtn(setting.getPagingNextbtn())
+                .maxPage(setting.getMaxPage())
+                .linkArea(setting.getLinkArea())
+                .build()
+        );
     }
 
     //설정수정 조건조회

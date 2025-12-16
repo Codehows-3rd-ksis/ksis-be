@@ -50,6 +50,7 @@ public class StatusService {
     private StatusShowDto toDto(CrawlWork work) {
         StatusShowDto dto = new StatusShowDto();
         dto.setSettingName(work.getSetting().getSettingName());
+        dto.setStartAt(work.getStartAt());
         dto.setWorkId(work.getWorkId());
         dto.setUserId(work.getStartedBy().getUsername());
         dto.setType(work.getType());

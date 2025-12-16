@@ -13,6 +13,7 @@ public class StatusShowDto {
     private String settingName;
     private String userId;
     private String type;
+    private LocalDateTime startAt;
     private LocalDateTime startDate;
     private LocalDateTime endDate;
     private String cycle;

@@ -25,7 +25,7 @@ public class WebSocketAuthInterceptor implements ChannelInterceptor {
         //STOMP 커넥트 jwt토큰 재활용
         if (StompCommand.CONNECT.equals(accessor.getCommand())) {
             String authorizationHeader = accessor.getFirstNativeHeader("Authorization");
-            log.debug("웹소켓커넥트 인증헤더: " + authorizationHeader);
+            log.info("웹소켓커넥트 인증헤더: " + authorizationHeader);
 
             //authorization 헤더, Bearer로 시작하는지 확인
             if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
@@ -36,13 +36,13 @@ public class WebSocketAuthInterceptor implements ChannelInterceptor {
                     Authentication authentication = jwtTokenProvider.getAuthentication(jwt);
                     accessor.setUser(authentication); //웹소켓 세션에 인증된 사용자 정보 저장
                     SecurityContextHolder.getContext().setAuthentication(authentication); //시큐리티 컨택스트에 인증정보저장
-                    log.debug("웹소켓커넥트 인증정보: " + authentication.getName());
+                    log.info("웹소켓커넥트 인증정보: " + authentication.getName());
                 } else {
-                    log.warn("웹소켓커넥트: 유효하지 않은 토큰");
+                    log.info("웹소켓커넥트: 유효하지 않은 토큰");
                     throw new RuntimeException("유효하지 않은 토큰");
                 }
             } else {
-                log.warn("웹소켓커넥트: 인증헤더가 없거나 잘못된 형식, 연결거부");
+                log.info("웹소켓커넥트: 인증헤더가 없거나 잘못된 형식, 연결거부");
                 throw new RuntimeException("인증헤더가 없거나 잘못된 형식");
             }
         }
@@ -60,7 +60,7 @@ public class WebSocketAuthInterceptor implements ChannelInterceptor {
         StompHeaderAccessor accessor = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
         if (accessor != null && StompCommand.DISCONNECT.equals(accessor.getCommand())) {
             SecurityContextHolder.clearContext();
-            log.debug("웹소켓 연결되지 않음: 시큐리티컨택스트 정리");
+            log.info("웹소켓 연결되지 않음: 시큐리티컨택스트 정리");
         }
     }
 }

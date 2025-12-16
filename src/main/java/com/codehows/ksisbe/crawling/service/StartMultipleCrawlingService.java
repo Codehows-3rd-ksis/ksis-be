@@ -7,6 +7,7 @@ import com.codehows.ksisbe.crawling.repository.CrawlWorkRepository;
 import com.codehows.ksisbe.setting.entity.Conditions;
 import com.codehows.ksisbe.setting.entity.Setting;
 import com.codehows.ksisbe.setting.repository.SettingRepository;
+import com.codehows.ksisbe.status.service.CrawlProgressPushService;
 import com.codehows.ksisbe.user.User;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -33,6 +34,7 @@ public class StartMultipleCrawlingService {
     private final CrawlResultItemRepository crawlResultItemRepository;
     private final CrawlingFailService crawlingFailService;
     private final ExtractDetailUrlsMulti extractDetailUrlsMulti;
+    private final CrawlProgressPushService crawlProgressPushService;
 //    private final WorkSaverService  workSaverService;
 
     @Transactional
@@ -165,6 +167,7 @@ public class StartMultipleCrawlingService {
         crawlWork.setUpdateAt(now);
 
         crawlWorkRepository.save(crawlWork);
+        crawlProgressPushService.pushProgress(crawlWork);
     }
 
     @Transactional

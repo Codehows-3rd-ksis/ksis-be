@@ -5,6 +5,7 @@ import com.codehows.ksisbe.user.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface CrawlWorkRepository extends JpaRepository<CrawlWork,Long> {
     // 관리자용
@@ -12,4 +13,7 @@ public interface CrawlWorkRepository extends JpaRepository<CrawlWork,Long> {
 
     // 일반 사용자용
     List<CrawlWork> findAllByStartedByAndIsDeleteAndState(User user, String isDelete, String state);
+
+    Optional<CrawlWork> findByWorkIdAndStartedByUsername(Long workId, String username);
+    Optional<CrawlWork> findByWorkId(Long workId);
 }

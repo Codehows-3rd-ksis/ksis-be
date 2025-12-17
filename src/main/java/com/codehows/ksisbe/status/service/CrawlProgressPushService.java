@@ -21,6 +21,7 @@ public class CrawlProgressPushService {
 
         CrawlProgressMessage message =
                 new CrawlProgressMessage(
+                        crawlWork.getWorkId(),
                         crawlWork.getProgress()
                 );
 

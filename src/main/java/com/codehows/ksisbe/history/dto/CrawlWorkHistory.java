@@ -17,7 +17,7 @@ public class CrawlWorkHistory {
     private String settingName;
     private Long scheduleId;
     private Long startedBy;
-    private Long failCount;
+    private Integer failCount;
     private String state;
     private String type;
     private LocalDateTime startAt;

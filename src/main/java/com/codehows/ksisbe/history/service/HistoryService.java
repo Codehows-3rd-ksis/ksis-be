@@ -53,7 +53,7 @@ public class HistoryService {
                 .username(entity.getSetting() != null ? entity.getSetting().getUser().getUsername() : null)
                 .scheduleId(entity.getScheduler() != null ? entity.getScheduler().getScheduleId() : null)
                 .startedBy(entity.getStartedBy() != null ? entity.getStartedBy().getId() : null)
-                .failCount(entity.getFailCount() != null ? entity.getFailCount().longValue() : 0L)
+                .failCount(entity.getFailCount() != null ? entity.getFailCount().intValue() : 0)
                 .state(entity.getState())
                 .type(entity.getType())
                 .startAt(entity.getStartAt())

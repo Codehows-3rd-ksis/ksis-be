@@ -8,4 +8,7 @@ import lombok.Setter;
 public class SearchCondition {
     private String type;
     private String keyword;
+
+    private String startDate; // yyyy-MM-dd
+    private String endDate;   // yyyy-MM-dd
 }

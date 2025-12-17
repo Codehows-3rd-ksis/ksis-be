@@ -49,7 +49,7 @@ public class UserController {
         return ResponseEntity.ok(response);
     }
 
-    //관리자 유저조회
+    //관리자 유저조회 테이블조회용
     @GetMapping("/user")
     public ResponseEntity<?> findAllUsers(
             @ModelAttribute SearchCondition condition, Pageable pageable){

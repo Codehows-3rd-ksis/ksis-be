@@ -1,7 +1,7 @@
 package com.codehows.ksisbe.status.controller;
 
-import com.codehows.ksisbe.setting.dto.SettingShowDto;
-import com.codehows.ksisbe.status.dto.StatusDetailShowDto;
+import com.codehows.ksisbe.status.dto.statusDetailDto.BasicInfo;
+import com.codehows.ksisbe.status.dto.statusDetailDto.StatusDetailShowDto;
 import com.codehows.ksisbe.status.dto.StatusShowDto;
 import com.codehows.ksisbe.status.service.StatusService;
 import lombok.RequiredArgsConstructor;
@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -37,7 +36,7 @@ public class StatusController {
     }
 
     @GetMapping("/status/detail/{workId}")
-    public ResponseEntity<StatusDetailShowDto> findStatusDetail(
+    public ResponseEntity<?> findStatusDetail(
             @PathVariable Long workId,
             Authentication authentication
     ) {

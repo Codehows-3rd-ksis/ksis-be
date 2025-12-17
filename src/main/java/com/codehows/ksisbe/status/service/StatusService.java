@@ -5,9 +5,7 @@ import com.codehows.ksisbe.crawling.entity.CrawlWork;
 import com.codehows.ksisbe.crawling.repository.CrawlResultItemRepository;
 import com.codehows.ksisbe.crawling.repository.CrawlWorkRepository;
 
-import com.codehows.ksisbe.setting.entity.Setting;
-import com.codehows.ksisbe.status.dto.StatusDetailItemShowDto;
-import com.codehows.ksisbe.status.dto.StatusDetailShowDto;
+import com.codehows.ksisbe.status.dto.statusDetailDto.*;
 import com.codehows.ksisbe.status.dto.StatusShowDto;
 
 import com.codehows.ksisbe.user.User;
@@ -19,7 +17,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -29,6 +26,7 @@ public class StatusService {
     private final CrawlWorkRepository crawlWorkRepository;
     private final CrawlResultItemRepository crawlResultItemRepository;
 
+    //현황조회
     @Transactional(readOnly = true)
     public List<StatusShowDto> findStatus(String username) {
 
@@ -65,6 +63,7 @@ public class StatusService {
         return dto;
     }
 
+    //상세조회
     @Transactional(readOnly = true)
     public StatusDetailShowDto findStatusDetail(Long workId, String username) {
         User user =  userRepository.findByUsernameAndIsDelete(username, "N")
@@ -83,34 +82,54 @@ public class StatusService {
 
         List<CrawlResultItem> items = crawlResultItemRepository.findByCrawlWorkOrderBySeqAsc(work);
 
-        List<StatusDetailItemShowDto> itemDtos = new ArrayList<>();
+        List<FailureItem> failureList = new ArrayList<>();
+        List<CollectionRow> collectionRows = new ArrayList<>();
 
         for (CrawlResultItem item : items) {
-            StatusDetailItemShowDto dto = new StatusDetailItemShowDto();
-            dto.setItemId(item.getItemId());
-            dto.setSeq(item.getSeq());
-            dto.setResultValue(item.getResultValue());
+            if ("FAILED".equals(item.getState())) {
+                FailureItem fail = new FailureItem();
+                fail.setItemId(item.getItemId());
+                fail.setSeq(item.getSeq());
+                fail.setUrl(item.getPageUrl());
+                failureList.add(fail);
+            }
 
-            itemDtos.add(dto);
+            if ("SUCCESS".equals(item.getState())) {
+                CollectionRow row = new CollectionRow();
+                row.setItemId(item.getItemId());
+                row.setSeq(item.getSeq());
+                row.setResultValue(item.getResultValue());
+                collectionRows.add(row);
+            }
         }
-        StatusDetailShowDto dto = new StatusDetailShowDto();
-        dto.setWorkId(work.getWorkId());
-        dto.setSettingName(work.getSetting().getSettingName());
-        dto.setUserId(work.getStartedBy().getUsername());
-        dto.setType(work.getType());
-        dto.setStartAt(work.getStartAt());
-        dto.setEndAt(work.getEndAt());
-//        dto.setStartDate(work.getStartDate());
-//        dto.setEndDate(work.getEndDate());
-//        dto.setCycle(work.getCycle());
-        dto.setProgress(work.getProgress());
-        dto.setState(work.getState());
-        dto.setFailCount(work.getFailCount());
-        dto.setCollectCount(work.getCollectCount());
-        dto.setTotalCount(work.getTotalCount());
-        dto.setExpectEndAt(work.getExpectEndAt());
-        dto.setStatusDetailShowDto(itemDtos);
+        BasicInfo basicInfo = new BasicInfo();
+        basicInfo.setWorkId(work.getWorkId());
+        basicInfo.setSettingName(work.getSetting().getSettingName());
+        basicInfo.setType(work.getType());
+        basicInfo.setUserId(work.getStartedBy().getUsername());
+//            basicInfo.setStartDate(work.getStartDate());
+//            basicInfo.setEndDate(work.getEndDate());
+//            basicInfo.setCycle(work.getCycle());
+        basicInfo.setStartAt(work.getStartAt());
+        basicInfo.setEndAt(work.getEndAt());
+        basicInfo.setState(work.getState());
+        basicInfo.setProgress(work.getProgress());
 
-        return dto;
+        ProgressInfo progressInfo = new ProgressInfo();
+        progressInfo.setTotalCount(work.getTotalCount());
+        progressInfo.setCollectCount(work.getCollectCount());
+        progressInfo.setFailCount(work.getFailCount());
+        progressInfo.setExpectEndAt(work.getExpectEndAt());
+
+        CollectionData collectionData = new CollectionData();
+        collectionData.setRows(collectionRows);
+
+        StatusDetailShowDto response = new StatusDetailShowDto();
+        response.setBasicInfo(basicInfo);
+        response.setFailureList(failureList);
+        response.setCollectionData(collectionData);
+        response.setProgressInfo(progressInfo);
+
+        return response;
     }
 }

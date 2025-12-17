@@ -11,5 +11,5 @@ public class StatusDetailShowDto {
     private BasicInfo basicInfo;
     private List<FailureItem> failureList;
     private CollectionData collectionData;
-    private ProgressInfo progressInfo;
+    private ProgressInfo progress;
 }

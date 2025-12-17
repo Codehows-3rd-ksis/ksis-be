@@ -128,7 +128,7 @@ public class StatusService {
         response.setBasicInfo(basicInfo);
         response.setFailureList(failureList);
         response.setCollectionData(collectionData);
-        response.setProgressInfo(progressInfo);
+        response.setProgress(progressInfo);
 
         return response;
     }

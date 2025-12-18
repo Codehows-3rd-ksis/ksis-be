@@ -278,7 +278,7 @@ public class SettingService {
                 .createAt(originSetting.getCreateAt()) // origin의 create를 따라감
                 .updateAt(LocalDateTime.now()) // 변경 시점
                 .isDelete("N")
-                .user(user)
+                .user(originSetting.getUser())
                 .build();
 
         // Conditions 변환 및 부모 세팅 연결

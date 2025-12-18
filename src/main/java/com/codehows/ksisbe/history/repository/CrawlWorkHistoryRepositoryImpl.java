@@ -28,11 +28,25 @@ public class CrawlWorkHistoryRepositoryImpl implements CrawlWorkHistoryRepositor
     private final JPAQueryFactory queryFactory;
 
     @Override
-    public Page<CrawlWork> search(SearchCondition condition, Pageable pageable) {
-
+    public Page<CrawlWork> search(Long userId, String role, SearchCondition condition, Pageable pageable) {
         QCrawlWork work = QCrawlWork.crawlWork;
 
         BooleanBuilder builder = new BooleanBuilder();
+        builder.and(work.isDelete.eq("N"));
+
+        // 관리자면 전체, 일반유저면 본인것만 조회
+        if (!"ROLE_ADMIN".equals(role)) {
+
+            BooleanExpression manualCondition =
+                    work.type.eq("수동실행")
+                            .and(work.startedBy.id.eq(userId));
+
+            BooleanExpression scheduleCondition =
+                    work.type.eq("스케줄링")
+                            .and(work.setting.user.id.eq(userId));
+
+            builder.and(manualCondition.or(scheduleCondition));
+        }
 
         // 🔹 실행 타입
         builder.and(eqType(work, condition.getType()));

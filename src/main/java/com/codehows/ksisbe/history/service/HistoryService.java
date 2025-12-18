@@ -6,10 +6,13 @@ import com.codehows.ksisbe.history.dto.CrawlResultItemHistory;
 import com.codehows.ksisbe.history.dto.CrawlWorkHistory;
 import com.codehows.ksisbe.history.repository.CrawlResultItemHistoryRepository;
 import com.codehows.ksisbe.history.repository.CrawlWorkHistoryRepository;
+import com.codehows.ksisbe.query.dto.SearchCondition;
 import com.codehows.ksisbe.user.User;
 import com.codehows.ksisbe.user.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
@@ -26,22 +29,34 @@ public class HistoryService {
 
     // 관리자일 때 필터없이 모든이력 조회, 유저일 때는 자신의 것만 조회
     @Transactional
-    public List<CrawlWorkHistory> findCrawlWorkHistories(String username) {
+    public Page<CrawlWorkHistory> findCrawlWorkHistories(String username, SearchCondition condition, Pageable pageable) {
         User user = userRepository.findByUsernameAndIsDelete(username, "N")
                 .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다: " + username));
 
-        List<CrawlWork> crawlWorks;
-        if ("ROLE_ADMIN".equals(user.getRole())) {
-            crawlWorks = crawlWorkHistoryRepository.findByIsDelete("N");
-        } else {
-            crawlWorks = crawlWorkHistoryRepository.findByUserId(user.getId());
-        }
+        Page<CrawlWork> works = crawlWorkHistoryRepository.search(
+                user.getId(),
+                user.getRole(),
+                condition,
+                pageable
+        );
 
-
-        // CrawlWork 엔티티 리스트를 CrawlWorkHistory DTO 리스트로 변환
-        return crawlWorks.stream()
-                .map(this::toDto)
-                .collect(Collectors.toList());
+        return works.map(crawlWork -> CrawlWorkHistory.builder()
+                .workId(crawlWork.getWorkId())
+                .settingId(crawlWork.getSetting().getSettingId())
+                .settingName(crawlWork.getSetting().getSettingName())
+                .startedBy(crawlWork.getStartedBy() != null ? crawlWork.getStartedBy().getId() : null)
+                .username(crawlWork.getStartedBy() != null ? crawlWork.getStartedBy().getUsername() : null)
+                .scheduleId(crawlWork.getScheduler() != null ? crawlWork.getScheduler().getScheduleId() : null)
+                .startDate(crawlWork.getScheduler() != null ? crawlWork.getScheduler().getStartDate() : null)
+                .endDate(crawlWork.getScheduler() != null ? crawlWork.getScheduler().getEndDate() : null)
+                .period(crawlWork.getScheduler() != null ? crawlWork.getScheduler().getCronExpression() : null)
+                .failCount(crawlWork.getFailCount())
+                .state(crawlWork.getState())
+                .type(crawlWork.getType())
+                .startAt(crawlWork.getStartAt())
+                .endAt(crawlWork.getEndAt())
+                .build()
+        );
     }
 
     private CrawlWorkHistory toDto(CrawlWork entity) {

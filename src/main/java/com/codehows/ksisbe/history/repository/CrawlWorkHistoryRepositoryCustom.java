@@ -7,5 +7,5 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 public interface CrawlWorkHistoryRepositoryCustom {
-    Page<CrawlWork> search(SearchCondition condition, Pageable pageable);
+    Page<CrawlWork> search(Long userId, String role, SearchCondition condition, Pageable pageable);
 }

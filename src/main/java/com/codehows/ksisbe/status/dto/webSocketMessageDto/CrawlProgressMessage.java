@@ -1,4 +1,4 @@
-package com.codehows.ksisbe.status.dto;
+package com.codehows.ksisbe.status.dto.webSocketMessageDto;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

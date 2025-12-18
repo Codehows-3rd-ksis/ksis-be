@@ -78,18 +78,20 @@ public class StartMultipleCrawlingService {
 //            int collectCount = 0;
 
             for (String detailUrl : detailUrls) {
+                CrawlResultItem resultItem = null;
                 try {
                     driver.get(detailUrl);
                     Map<String, String> result = crawlDetailPage(driver, setting);
-                    saveResultItem(crawlWork, detailUrl, result, seq);
+                    resultItem = saveResultItem(crawlWork, detailUrl, result, seq);
                 } catch (Exception e) {
                     e.printStackTrace();
                     failCount++;
-                    crawlingFailService.saveFailedResultMulti(crawlWork.getWorkId(), detailUrl, (long) seq);
+                    resultItem = crawlingFailService.saveFailedResultMulti(crawlWork.getWorkId(), detailUrl, (long) seq);
                 } finally {
                     incrementCollectCount(crawlWork);
 //                    collectCount++;
                     updateCollectProgress(crawlWork, failCount, totalCount);
+                    crawlProgressPushService.pushCollect(crawlWork, resultItem);
                     seq++;
                 }
             }
@@ -102,7 +104,7 @@ public class StartMultipleCrawlingService {
     }
 
     @Transactional
-    public void saveResultItem(CrawlWork crawlWork, String pageUrl, Map<String, String> resultMap, int seq) throws Exception {
+    public CrawlResultItem saveResultItem(CrawlWork crawlWork, String pageUrl, Map<String, String> resultMap, int seq) throws Exception {
         ObjectMapper mapper = new ObjectMapper();
         String json = mapper.writeValueAsString(resultMap);
 
@@ -118,13 +120,7 @@ public class StartMultipleCrawlingService {
         crawlWork.getCrawlResultItems().add(item);
         item.setCrawlWork(crawlWork);
 
-        try {
-            crawlResultItemRepository.save(item);
-        } catch (Exception e) {
-            // 반드시 예외 로그 남기기
-            e.printStackTrace();
-            throw e; // 예외 재던지기 (롤백 유도)
-        }
+        return crawlResultItemRepository.save(item);
     }
 
     @Transactional

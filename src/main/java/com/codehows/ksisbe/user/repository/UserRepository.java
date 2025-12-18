@@ -17,8 +17,8 @@ public interface UserRepository extends JpaRepository<User, Long>  {
     Optional<User> findByUsernameAndIsDelete(String username, String isDelete);
     List<User> findAllByIsDelete(String isDelete);
     List<User> findAllByIsDeleteAndRoleNot(String isDelete, String role);
-    boolean existsByUsername(String username);
-    boolean existsByUsernameAndIdNot(String username, Long id);
+    boolean existsByUsernameAndIsDelete(String username, String isDelete);
+    boolean existsByUsernameAndIdNotAndIsDelete(String username, Long id, String isDelete);
 
 
 }

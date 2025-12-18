@@ -61,7 +61,7 @@ public class UserRepositoryImpl implements UserRepositoryCustom {
                 .where(builder)
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
-                .orderBy(user.id.desc())
+                .orderBy(user.createAt.desc()) // 최신 생성 내림차순
                 .fetch();
 
         long total = queryFactory

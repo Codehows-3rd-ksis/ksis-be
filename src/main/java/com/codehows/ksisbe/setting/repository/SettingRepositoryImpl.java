@@ -62,7 +62,7 @@ public class SettingRepositoryImpl implements SettingRepositoryCustom {
         List<Setting> content = queryFactory
                 .selectFrom(setting)
                 .where(builder)
-                .orderBy(setting.settingId.desc()) // 최신순
+                .orderBy(setting.createAt.desc()) // 최신순
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();

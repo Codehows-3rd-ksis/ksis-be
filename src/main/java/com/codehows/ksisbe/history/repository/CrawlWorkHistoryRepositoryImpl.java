@@ -65,7 +65,7 @@ public class CrawlWorkHistoryRepositoryImpl implements CrawlWorkHistoryRepositor
         List<CrawlWork> content = queryFactory
                 .selectFrom(work)
                 .where(builder)
-                .orderBy(work.workId.desc())
+                .orderBy(work.createAt.desc()) // 최신순 내림차순
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();

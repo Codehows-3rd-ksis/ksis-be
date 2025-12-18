@@ -78,11 +78,11 @@ public class UserService {
     // ID (username) 중복체크
     // 신규 등록용
     public boolean isUsernameDuplicate(String username) {
-        return userRepository.existsByUsername(username);
+        return userRepository.existsByUsernameAndIsDelete(username, "N");
     }
 
     // 수정용 (본인 제외)
     public boolean isUsernameDuplicate(String username, Long userId) {
-        return userRepository.existsByUsernameAndIdNot(username, userId);
+        return userRepository.existsByUsernameAndIdNotAndIsDelete(username, userId, "N");
     }
 }

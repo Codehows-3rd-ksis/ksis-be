@@ -101,15 +101,11 @@ public class SettingController {
     //설정수정
     @PutMapping("/setting/{settingId}")
     public ResponseEntity<?> updateSetting(@PathVariable Long settingId,
-                                           @RequestBody SettingUpdateDto settingUpdateDto, Authentication authentication) {
-
-        String username = authentication.getName();
+                                           @RequestBody SettingRequestDto settingRequestDto, Authentication authentication) {
 
         try {
-            User user = userRepository.findByUsernameAndIsDelete(username, "N")
-                    .orElseThrow((() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다: " + username)));
-            Long userId = user.getId();
-            settingService.updateSetting(userId, settingId, settingUpdateDto);
+            String username = authentication.getName();
+            settingService.updateSetting2(username, settingId, settingRequestDto);
 
             return ResponseEntity.ok("수정완료");
 

@@ -92,15 +92,17 @@ public class StatusService {
                 fail.setSeq(item.getSeq());
                 fail.setUrl(item.getPageUrl());
                 failureList.add(fail);
+
             }
 
-            if ("SUCCESS".equals(item.getState())) {
-                CollectionRow row = new CollectionRow();
-                row.setItemId(item.getItemId());
-                row.setSeq(item.getSeq());
-                row.setResultValue(item.getResultValue());
-                collectionRows.add(row);
-            }
+
+            CollectionRow row = new CollectionRow();
+            row.setItemId(item.getItemId());
+            row.setSeq(item.getSeq());
+            row.setResultValue(item.getResultValue());
+            row.setState(item.getState());
+            collectionRows.add(row);
+
         }
         BasicInfo basicInfo = new BasicInfo();
         basicInfo.setWorkId(work.getWorkId());

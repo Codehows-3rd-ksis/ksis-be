@@ -9,4 +9,5 @@ public class CollectionRow {
     private Long itemId;
     private Long seq;
     private String resultValue;
+    private String state;
 }

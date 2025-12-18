@@ -15,4 +15,7 @@ public class CrawlProgressDto {
     private Integer failCount;
     private Double progress;
     private LocalDateTime expectEndAt;
+
+    private LocalDateTime endAt;
+    private String state;
 }

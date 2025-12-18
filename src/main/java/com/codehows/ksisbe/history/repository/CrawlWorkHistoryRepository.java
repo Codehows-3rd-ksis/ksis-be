@@ -10,7 +10,7 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface CrawlWorkHistoryRepository extends JpaRepository<CrawlWork, Long> {
+public interface CrawlWorkHistoryRepository extends JpaRepository<CrawlWork, Long>, CrawlWorkHistoryRepositoryCustom {
     List<CrawlWork> findByIsDelete(String isDelete);
 
     @Query("SELECT cw " +

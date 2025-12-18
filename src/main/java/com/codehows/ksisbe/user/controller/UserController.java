@@ -15,6 +15,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 @RestController
 @RequiredArgsConstructor
 public class UserController {
@@ -28,6 +30,19 @@ public class UserController {
     public ResponseEntity<?> registerUser(@RequestBody UserRegisterRequest dto) {
         userService.registerUser(dto);
         return ResponseEntity.ok("등록완료");
+    }
+    @GetMapping("/user/checkUsername")
+    public ResponseEntity<?> checkUsernameDuplicate(
+            @RequestParam String username) {
+
+        boolean isDuplicate = userService.isUsernameDuplicate(username);
+
+        return ResponseEntity.ok(
+                Map.of(
+                        "duplicate", isDuplicate,
+                        "message", isDuplicate ? "입력한 ID는 이미 사용 중인 ID입니다." : "사용 가능한 ID입니다."
+                )
+        );
     }
 
     //로그인 유저정보 가져오기
@@ -81,18 +96,33 @@ public class UserController {
         return ResponseEntity.ok(response);
     }
     
-    //관리자 유저수정
+    //관리자 유저 정보 수정
     @PutMapping("/userInfo/{id}")
     public ResponseEntity<?> updateUser(@PathVariable Long id, @RequestBody UserUpdateRequest dto) {
         userService.updateUser(id, dto);
         return ResponseEntity.ok("수정완료");
     }
-    //관리자 유저수정조회
+    //관리자 유저 계정 수정
     @PutMapping("/userAccount/{id}")
     public ResponseEntity<?> updateUserAccount(@PathVariable Long id, @RequestBody UserAccountUpdateRequest dto) {
         userService.updateUserAccount(id, dto);
         return ResponseEntity.ok("수정완료");
     }
+    @GetMapping("/user/checkUsername/{id}")
+    public ResponseEntity<?> checkUsernameDuplicateForUpdate(
+            @PathVariable Long id,
+            @RequestParam String username) {
+
+        boolean isDuplicate = userService.isUsernameDuplicate(username, id);
+
+        return ResponseEntity.ok(
+                Map.of(
+                        "duplicate", isDuplicate,
+                        "message", isDuplicate ? "입력한 ID는 이미 사용 중인 ID입니다." : "사용 가능한 ID입니다."
+                )
+        );
+    }
+
 
     //관리자 유저삭제
     @DeleteMapping("/user/{id}")

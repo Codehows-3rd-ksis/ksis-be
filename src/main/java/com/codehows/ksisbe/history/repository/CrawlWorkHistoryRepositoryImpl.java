@@ -116,4 +116,55 @@ public class CrawlWorkHistoryRepositoryImpl implements CrawlWorkHistoryRepositor
 
         return builder;
     }
+
+    public Page<CrawlWork> searchByUserLog(
+            Long userId,
+            SearchCondition condition,
+            Pageable pageable
+    ) {
+        QCrawlWork work = QCrawlWork.crawlWork;
+
+        BooleanBuilder builder = new BooleanBuilder();
+        builder.and(work.isDelete.eq("N"));
+
+        // 🔹 userId 기준 조회 (항상 적용)
+        BooleanExpression manualCondition =
+                work.type.eq("수동실행")
+                        .and(work.startedBy.id.eq(userId));
+
+        BooleanExpression scheduleCondition =
+                work.type.eq("스케줄링")
+                        .and(work.setting.user.id.eq(userId));
+
+        builder.and(manualCondition.or(scheduleCondition));
+
+        // 🔹 실행 타입 필터 (수동실행 / 스케줄링 / all)
+        builder.and(eqType(work, condition.getType()));
+
+        // 🔹 키워드
+        builder.and(containsKeyword(work, condition.getKeyword()));
+
+        // 🔹 기간
+        builder.and(betweenDate(
+                work.startAt,
+                work.endAt,
+                condition.getStartDate(),
+                condition.getEndDate()
+        ));
+
+        List<CrawlWork> content = queryFactory
+                .selectFrom(work)
+                .where(builder)
+                .orderBy(work.createAt.desc())
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .fetch();
+
+        long total = queryFactory
+                .selectFrom(work)
+                .where(builder)
+                .fetchCount();
+
+        return new PageImpl<>(content, pageable, total);
+    }
 }

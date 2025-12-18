@@ -70,8 +70,16 @@ public class HistoryController {
 
 //  유저관리 - 사용자 로그 확인용
     @GetMapping("/history/{userId}")
-    public List<CrawlWorkHistory> getCrawlWorksByUserId(@PathVariable Long userId) {
-        return historyService.findByUserId(userId);
+    public ResponseEntity<?> getCrawlWorksByUserId(@PathVariable Long userId, @ModelAttribute SearchCondition condition, Pageable pageable) {
+
+        Page<CrawlWorkHistory> result = historyService.findCrawlWorkHistoriesByUserId(userId, condition, pageable);
+        return ResponseEntity.ok(new CustomPageResponse<>(
+                result.getContent(),
+                result.getNumber(),
+                result.getSize(),
+                result.getTotalElements(),
+                result.getTotalPages()
+        ));
     }
 
 }

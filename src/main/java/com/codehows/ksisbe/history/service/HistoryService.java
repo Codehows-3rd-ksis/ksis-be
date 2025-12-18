@@ -97,11 +97,31 @@ public class HistoryService {
     }
 
     // setting_id 안의 user_id가 input과 같은 값들을 조회 : 사용자 이력조회로 사용
-    public List<CrawlWorkHistory> findByUserId(Long userId) {
-        List<CrawlWork> works = crawlWorkHistoryRepository.findByUserId(userId);
+    @Transactional
+    public Page<CrawlWorkHistory> findCrawlWorkHistoriesByUserId(Long userId, SearchCondition condition, Pageable pageable) {
 
-        return works.stream()
-                .map(this::toDto)
-                .collect(Collectors.toList());
+        Page<CrawlWork> works = crawlWorkHistoryRepository.searchByUserLog(
+                userId,
+                condition,
+                pageable
+        );
+
+        return works.map(crawlWork -> CrawlWorkHistory.builder()
+                .workId(crawlWork.getWorkId())
+                .settingId(crawlWork.getSetting().getSettingId())
+                .settingName(crawlWork.getSetting().getSettingName())
+                .startedBy(crawlWork.getStartedBy() != null ? crawlWork.getStartedBy().getId() : null)
+                .username(crawlWork.getStartedBy() != null ? crawlWork.getStartedBy().getUsername() : null)
+                .scheduleId(crawlWork.getScheduler() != null ? crawlWork.getScheduler().getScheduleId() : null)
+                .startDate(crawlWork.getScheduler() != null ? crawlWork.getScheduler().getStartDate() : null)
+                .endDate(crawlWork.getScheduler() != null ? crawlWork.getScheduler().getEndDate() : null)
+                .period(crawlWork.getScheduler() != null ? crawlWork.getScheduler().getCronExpression() : null)
+                .failCount(crawlWork.getFailCount())
+                .state(crawlWork.getState())
+                .type(crawlWork.getType())
+                .startAt(crawlWork.getStartAt())
+                .endAt(crawlWork.getEndAt())
+                .build()
+        );
     }
 }

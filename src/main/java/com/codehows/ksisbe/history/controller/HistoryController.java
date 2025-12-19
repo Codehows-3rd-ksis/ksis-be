@@ -8,6 +8,7 @@ import com.codehows.ksisbe.history.repository.CrawlWorkHistoryRepositoryImpl;
 import com.codehows.ksisbe.history.service.HistoryService;
 import com.codehows.ksisbe.query.dto.CustomPageResponse;
 import com.codehows.ksisbe.query.dto.SearchCondition;
+import com.codehows.ksisbe.status.dto.statusDetailDto.StatusDetailShowDto;
 import com.codehows.ksisbe.user.dto.UserShowResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -63,10 +64,28 @@ public class HistoryController {
         }
     }
 
-    @GetMapping("/history/result/{workId}")
-    public List<CrawlResultItemHistory> getResultsByWorkId(@PathVariable Long workId) {
-        return historyService.getSelectedWorkResults(workId);
+
+    //이력상세조회
+    @GetMapping("/history/detail/{workId}")
+    public ResponseEntity<?> findStatusDetail(
+            @PathVariable Long workId,
+            Authentication authentication
+    ) {
+        String username = authentication.getName();
+
+        StatusDetailShowDto response =
+                historyService.findHistoryDetail(workId, username);
+
+        return ResponseEntity.ok(response);
     }
+
+
+
+
+
+
+
+
 
 //  유저관리 - 사용자 로그 확인용
     @GetMapping("/history/{userId}")

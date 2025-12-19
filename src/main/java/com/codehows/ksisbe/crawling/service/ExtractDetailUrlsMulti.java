@@ -163,34 +163,34 @@ public class ExtractDetailUrlsMulti {
             for (By selector : selectorPriority) {
                 List<WebElement> found = listRoot.findElements(selector);
                 if (!found.isEmpty()) {
-                    for (WebElement el : found) {
-                        try {
-                            // 현재 페이지 URL 저장 (원래 페이지)
-                            String originalUrl = driver.getCurrentUrl();
+                    for (int i = 0; i < found.size(); i++) {
+                        WebElement freshListRoot = driver.findElement(By.cssSelector(listArea));
+                        List<WebElement> freshFound = freshListRoot.findElements(selector);
 
-                            // 링크 클릭
-                            el.click();
+                        if (i >= freshFound.size()) break;
 
-                            // 페이지 로드 대기 (예: 명시적 대기 사용)
-                            WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
-                            wait.until(webDriver -> !webDriver.getCurrentUrl().equals(originalUrl));
+                        WebElement el = freshFound.get(i);
 
-                            // 현재 URL 가져오기
-                            String currentUrl = driver.getCurrentUrl();
+                        // 현재 페이지 URL 저장 (원래 페이지)
+                        String originalUrl = driver.getCurrentUrl();
+
+                        // 링크 클릭
+                        el.click();
+
+                        // 페이지 로드 대기 (예: 명시적 대기 사용)
+                        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+                        wait.until(webDriver -> !webDriver.getCurrentUrl().equals(originalUrl));
+
+                        // 현재 URL 가져오기
+                        String currentUrl = driver.getCurrentUrl();
 //                            System.out.println("URL :" + currentUrl);
-                            links.add(currentUrl);
+                        links.add(currentUrl);
 
-                            // 다시 원래 페이지로 돌아가기
-                            driver.navigate().back();
+                        // 다시 원래 페이지로 돌아가기
+                        driver.navigate().back();
 
-                            // 원래 페이지 로드 대기 (필요시)
-                            wait.until(webDriver -> webDriver.getCurrentUrl().equals(originalUrl));
-
-                            // 다시 listRoot, found 요소를 찾는 등 필요한 작업 추가 가능
-
-                        } catch (Exception e) {
-                            System.out.println("Click and get URL error: " + e.getMessage());
-                        }
+                        // 원래 페이지 로드 대기 (필요시)
+                        wait.until(webDriver -> webDriver.getCurrentUrl().equals(originalUrl));
                     }
                     // 처음으로 발견된 우선순위만 사용하도록 break
                     break;

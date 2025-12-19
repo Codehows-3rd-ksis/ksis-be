@@ -184,4 +184,23 @@ public class HistoryService {
                 .build()
         );
     }
+
+    // input(workId)를 물고있는 resultItem을 조회
+    public List<CrawlResultItemHistory> getSelectedWorkResults(Long workId) {
+        List<CrawlResultItem> crawlResults = crawlResultItemHistoryRepository.findByCrawlWork_WorkId(workId);
+
+        return crawlResults.stream()
+                .map(this::toResultDto)
+                .collect(Collectors.toList());
+    }
+    private CrawlResultItemHistory toResultDto(CrawlResultItem entity) {
+        return CrawlResultItemHistory.builder()
+                .itemId(entity.getItemId())
+                .workId(entity.getCrawlWork() != null ? entity.getCrawlWork().getWorkId() : null)
+                .pageUrl(entity.getPageUrl())
+                .resultValue(entity.getResultValue())
+                .seq(entity.getSeq())
+                .state(entity.getState())
+                .build();
+    }
 }

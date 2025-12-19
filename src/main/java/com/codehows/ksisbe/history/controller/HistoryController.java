@@ -79,7 +79,10 @@ public class HistoryController {
         return ResponseEntity.ok(response);
     }
 
-
+    @GetMapping("/history/export/{workId}")
+    public List<CrawlResultItemHistory> getResultsByWorkId(@PathVariable Long workId) {
+        return historyService.getSelectedWorkResults(workId);
+    }
 
 
 

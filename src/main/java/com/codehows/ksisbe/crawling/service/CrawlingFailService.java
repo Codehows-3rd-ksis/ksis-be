@@ -46,13 +46,13 @@ public class CrawlingFailService {
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void saveFailedResultMulti(Long crawlWorkId, String failedUrl, Long seq) {
+    public CrawlResultItem saveFailedResultMulti(Long crawlWorkId, String failedUrl, Long seq) {
         CrawlWork managed = crawlWorkRepository.findById(crawlWorkId)
                 .orElseThrow(() -> new RuntimeException("CrawlWork not found"));
         System.out.println(crawlWorkId);
 
 
-        managed.setFailCount(managed.getFailCount() + 1);
+//        managed.setFailCount(managed.getFailCount() + 1);
         managed.setUpdateAt(LocalDateTime.now());
 
         CrawlResultItem resultItem = CrawlResultItem.builder()
@@ -64,7 +64,7 @@ public class CrawlingFailService {
                 .createAt(LocalDateTime.now())
                 .updateAt(LocalDateTime.now())
                 .build();
-        crawlResultItemRepository.save(resultItem);
-        crawlWorkRepository.save(managed);
+       return crawlResultItemRepository.save(resultItem);
+//        crawlWorkRepository.save(managed);
     }
 }

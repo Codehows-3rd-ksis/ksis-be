@@ -24,6 +24,9 @@ public class Setting {
     @Column(name = "setting_id")
     private Long settingId;
 
+    @Column(name = "origin_id", nullable = true)
+    private Long originId;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
 //    @JsonBackReference

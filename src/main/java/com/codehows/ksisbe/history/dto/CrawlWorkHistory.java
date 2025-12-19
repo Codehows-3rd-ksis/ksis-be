@@ -2,6 +2,7 @@ package com.codehows.ksisbe.history.dto;
 
 import lombok.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Getter
@@ -17,9 +18,12 @@ public class CrawlWorkHistory {
     private String settingName;
     private Long scheduleId;
     private Long startedBy;
-    private Long failCount;
+    private Integer failCount;
     private String state;
     private String type;
     private LocalDateTime startAt;
     private LocalDateTime endAt;
+    private LocalDate startDate;
+    private LocalDate endDate;
+    private String period;
 }

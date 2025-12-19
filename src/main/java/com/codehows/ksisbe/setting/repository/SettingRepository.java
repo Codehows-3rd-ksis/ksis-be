@@ -8,7 +8,7 @@ import org.springframework.data.repository.query.Param;
 import java.util.List;
 import java.util.Optional;
 
-public interface SettingRepository extends JpaRepository<Setting, Long> {
+public interface SettingRepository extends JpaRepository<Setting, Long>, SettingRepositoryCustom {
     // 특정 userId와 type으로 조회
     List<Setting> findByUserId(Long userId);
 

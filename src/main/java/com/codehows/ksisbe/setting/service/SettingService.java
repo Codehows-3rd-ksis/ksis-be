@@ -1,5 +1,6 @@
 package com.codehows.ksisbe.setting.service;
 
+import com.codehows.ksisbe.query.dto.SearchCondition;
 import com.codehows.ksisbe.setting.dto.*;
 import com.codehows.ksisbe.setting.entity.Conditions;
 import com.codehows.ksisbe.setting.entity.Setting;
@@ -8,6 +9,8 @@ import com.codehows.ksisbe.setting.repository.SettingRepository;
 import com.codehows.ksisbe.user.User;
 import com.codehows.ksisbe.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
@@ -16,7 +19,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -84,35 +86,33 @@ public class SettingService {
 
     //설정조회
     @Transactional(readOnly = true)
-    public List<SettingShowDto> findSetting(String username) {
+    public Page<SettingShowDto> findSetting(String username, SearchCondition condition, Pageable pageable) {
         User user = userRepository.findByUsernameAndIsDelete(username, "N")
                 .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다: " + username));
 
-        List<Setting> settings;
+        Page<Setting> page = settingRepository.search(
+                user.getId(),
+                user.getRole(),
+                condition,
+                pageable
+        );
 
-        if ("ROLE_ADMIN".equals(user.getRole())) {
-            settings = settingRepository.findByIsDelete("N");
-        } else {
-            settings = settingRepository.findByUserIdAndIsDelete(user.getId(),"N");
-        }
-
-        return settings.stream()
-                .map(setting -> SettingShowDto.builder()
-                        .settingId(setting.getSettingId())
-                        .userId(setting.getUser().getId())
-                        .settingName(setting.getSettingName())
-                        .url(setting.getUrl())
-                        .type(setting.getType())
-                        .userAgent(setting.getUserAgent())
-                        .rate(setting.getRate())
-                        .listArea(setting.getListArea())
-                        .pagingType(setting.getPagingType())
-                        .pagingArea(setting.getPagingArea())
-                        .pagingNextbtn(setting.getPagingNextbtn())
-                        .maxPage(setting.getMaxPage())
-                        .linkArea(setting.getLinkArea())
-                        .build())
-                .toList();
+        return page.map(setting -> SettingShowDto.builder()
+                .settingId(setting.getSettingId())
+                .userId(setting.getUser().getId())
+                .settingName(setting.getSettingName())
+                .url(setting.getUrl())
+                .type(setting.getType())
+                .userAgent(setting.getUserAgent())
+                .rate(setting.getRate())
+                .listArea(setting.getListArea())
+                .pagingType(setting.getPagingType())
+                .pagingArea(setting.getPagingArea())
+                .pagingNextbtn(setting.getPagingNextbtn())
+                .maxPage(setting.getMaxPage())
+                .linkArea(setting.getLinkArea())
+                .build()
+        );
     }
 
     //설정수정 조건조회
@@ -232,7 +232,7 @@ public class SettingService {
     //설정삭제
     public void deleteSetting(Long settingId, String username) {
         Setting setting = settingRepository.findBySettingIdAndIsDelete(settingId, "N")
-                .orElseThrow(() -> new IllegalArgumentException("유효한 설정아이디 입니다."));
+                .orElseThrow(() -> new IllegalArgumentException("유효하지 않은 설정아이디 입니다."));
         User user = userRepository.findByUsernameAndIsDelete(username, "N")
                 .orElseThrow(() -> new IllegalArgumentException("유효하지 않은 유저입니다."));
 
@@ -242,5 +242,74 @@ public class SettingService {
         }
         setting.setIsDelete("Y");
         settingRepository.save(setting);
+    }
+
+    // 데이터 불변성 위한 수정 변경
+    public void updateSetting2(String username, Long settingId, SettingRequestDto dto) {
+        Setting originSetting = settingRepository.findBySettingIdAndIsDelete(settingId, "N")
+                .orElseThrow(() -> new IllegalArgumentException("유효하지 않은 설정아이디 입니다."));
+        User user = userRepository.findByUsernameAndIsDelete(username, "N")
+                .orElseThrow(() -> new IllegalArgumentException("유효하지 않은 유저입니다."));
+
+        // 권한 체크
+        if (!user.getRole().equals("ROLE_ADMIN") && !originSetting.getUser().getId().equals(user.getId())) {
+            throw new AccessDeniedException("수정 권한이 없습니다.");
+        }
+
+        // 기존 Setting isDelete Y로 변환
+        originSetting.setIsDelete("Y");
+        settingRepository.save(originSetting);
+
+        // Setting newVersion 생성
+        // DTO → 엔티티 변환
+        Setting updateSetting = Setting.builder()
+                .settingName(dto.getSettingName())
+                .originId(originSetting.getSettingId()) // 원래 버전의 ID 기억
+                .url(dto.getUrl())
+                .type(dto.getType())
+                .userAgent(dto.getUserAgent())
+                .rate(dto.getRate())
+                .listArea(dto.getListArea())
+                .pagingType(dto.getPagingType())
+                .pagingArea(dto.getPagingArea())
+                .pagingNextbtn(dto.getPagingNextbtn())
+                .maxPage(dto.getMaxPage())
+                .linkArea(dto.getLinkArea())
+                .createAt(originSetting.getCreateAt()) // origin의 create를 따라감
+                .updateAt(LocalDateTime.now()) // 변경 시점
+                .isDelete("N")
+                .user(originSetting.getUser())
+                .build();
+
+        // Conditions 변환 및 부모 세팅 연결
+        if (dto.getConditions() != null) {
+
+            List<Conditions> conditions = new ArrayList<>();
+
+            for (ConditionsRequestDto cDto : dto.getConditions()) {
+                Conditions c = new Conditions();
+                c.setConditionsKey(cDto.getConditionsKey());
+                c.setConditionsValue(cDto.getConditionsValue());
+                c.setAttr(cDto.getAttr());
+                c.setSetting(updateSetting); // 연관관계 설정 (ManyToOne)
+                conditions.add(c);
+            }
+
+            updateSetting.setConditions(conditions);
+        }
+
+        // 단일 타입일 경우 필드 초기화
+        if ("단일".equalsIgnoreCase(updateSetting.getType())) {
+            updateSetting.setListArea(null);
+            updateSetting.setPagingType(null);
+            updateSetting.setPagingArea(null);
+            updateSetting.setPagingNextbtn(null);
+            updateSetting.setMaxPage(null);
+            updateSetting.setLinkArea(null);
+        } else if (!"다중".equalsIgnoreCase(updateSetting.getType())) {
+            throw new RuntimeException("없는 세팅타입: " + updateSetting.getType());
+        }
+
+        settingRepository.save(updateSetting);
     }
 }

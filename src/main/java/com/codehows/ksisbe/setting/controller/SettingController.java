@@ -1,5 +1,7 @@
 package com.codehows.ksisbe.setting.controller;
 
+import com.codehows.ksisbe.query.dto.CustomPageResponse;
+import com.codehows.ksisbe.query.dto.SearchCondition;
 import com.codehows.ksisbe.setting.dto.ConditionsShowDto;
 import com.codehows.ksisbe.setting.dto.SettingRequestDto;
 import com.codehows.ksisbe.setting.dto.SettingShowDto;
@@ -9,6 +11,8 @@ import com.codehows.ksisbe.setting.service.SettingService;
 import com.codehows.ksisbe.user.User;
 import com.codehows.ksisbe.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -49,12 +53,19 @@ public class SettingController {
 
     //설정조회
     @GetMapping("/setting")
-    public ResponseEntity<?> findSetting(Authentication authentication) {
+    public ResponseEntity<?> findSetting(Authentication authentication,
+                                         @ModelAttribute SearchCondition condition, Pageable pageable) {
 
         try {
             String username = authentication.getName();
-            List<SettingShowDto> list = settingService.findSetting(username);
-            return ResponseEntity.ok(list);
+            Page<SettingShowDto> result = settingService.findSetting(username, condition, pageable);
+            return ResponseEntity.ok(new CustomPageResponse<>(
+                    result.getContent(),
+                    result.getNumber(),
+                    result.getSize(),
+                    result.getTotalElements(),
+                    result.getTotalPages()
+            ));
 
         } catch (UsernameNotFoundException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -90,15 +101,11 @@ public class SettingController {
     //설정수정
     @PutMapping("/setting/{settingId}")
     public ResponseEntity<?> updateSetting(@PathVariable Long settingId,
-                                           @RequestBody SettingUpdateDto settingUpdateDto, Authentication authentication) {
-
-        String username = authentication.getName();
+                                           @RequestBody SettingRequestDto settingRequestDto, Authentication authentication) {
 
         try {
-            User user = userRepository.findByUsernameAndIsDelete(username, "N")
-                    .orElseThrow((() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다: " + username)));
-            Long userId = user.getId();
-            settingService.updateSetting(userId, settingId, settingUpdateDto);
+            String username = authentication.getName();
+            settingService.updateSetting2(username, settingId, settingRequestDto);
 
             return ResponseEntity.ok("수정완료");
 

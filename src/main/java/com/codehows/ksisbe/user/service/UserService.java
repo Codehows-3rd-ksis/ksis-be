@@ -74,4 +74,15 @@ public class UserService {
         user.setIsDelete("Y");
         userRepository.save(user);
     }
+
+    // ID (username) 중복체크
+    // 신규 등록용
+    public boolean isUsernameDuplicate(String username) {
+        return userRepository.existsByUsernameAndIsDelete(username, "N");
+    }
+
+    // 수정용 (본인 제외)
+    public boolean isUsernameDuplicate(String username, Long userId) {
+        return userRepository.existsByUsernameAndIdNotAndIsDelete(username, userId, "N");
+    }
 }

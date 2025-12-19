@@ -7,6 +7,7 @@ import com.codehows.ksisbe.crawling.repository.CrawlWorkRepository;
 import com.codehows.ksisbe.setting.entity.Conditions;
 import com.codehows.ksisbe.setting.entity.Setting;
 import com.codehows.ksisbe.setting.repository.SettingRepository;
+import com.codehows.ksisbe.status.service.CrawlProgressPushService;
 import com.codehows.ksisbe.user.User;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -33,6 +34,7 @@ public class StartMultipleCrawlingService {
     private final CrawlResultItemRepository crawlResultItemRepository;
     private final CrawlingFailService crawlingFailService;
     private final ExtractDetailUrlsMulti extractDetailUrlsMulti;
+    private final CrawlProgressPushService crawlProgressPushService;
 //    private final WorkSaverService  workSaverService;
 
     @Transactional
@@ -51,46 +53,21 @@ public class StartMultipleCrawlingService {
                 .isDelete("N")
                 .crawlResultItems(new ArrayList<>())
                 .build();
-        return crawlWorkRepository.save(crawlWork);
+        return crawlWorkRepository.saveAndFlush(crawlWork);
     }
 
     public void startMultipleCrawling(Long settingId, User user) {
         Setting setting = settingRepository.findBySettingIdAndIsDeleteWithConditions(settingId)
                 .orElseThrow(() -> new RuntimeException("유효하지 않은 설정입니다."));
-
         CrawlWork crawlWork = createCrawlWork(setting, user);
-
         WebDriver driver = null;
         try {
             driver = webDriverFactory.createDriver(setting.getUserAgent());
             driver.get(setting.getUrl());
 
             //목록페이지에서 상세 url 추출
-            List<String> detailUrls = extractDetailUrlsMulti.extractDetailUrls(driver, setting);
-            System.out.println("Detail URLs size: " + detailUrls.size());
-            detailUrls.forEach(System.out::println);
+            int failCount = extractDetailUrlsMulti.extractDetailUrls(crawlWork, driver, setting);
 
-            int seq = 1;
-            int failCount = 0;
-            int totalCount = detailUrls.size();
-//            int collectCount = 0;
-
-            for (String detailUrl : detailUrls) {
-                try {
-                    driver.get(detailUrl);
-                    Map<String, String> result = crawlDetailPage(driver, setting);
-                    saveResultItem(crawlWork, detailUrl, result, seq);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    failCount++;
-                    crawlingFailService.saveFailedResultMulti(crawlWork.getWorkId(), detailUrl, (long) seq);
-                } finally {
-                    incrementCollectCount(crawlWork);
-//                    collectCount++;
-                    updateCollectProgress(crawlWork, failCount, totalCount);
-                    seq++;
-                }
-            }
             updateCrawlWorkFinalStatus(crawlWork, failCount);
         }finally {
             if (driver != null) {
@@ -100,7 +77,7 @@ public class StartMultipleCrawlingService {
     }
 
     @Transactional
-    public void saveResultItem(CrawlWork crawlWork, String pageUrl, Map<String, String> resultMap, int seq) throws Exception {
+    public CrawlResultItem saveResultItem(CrawlWork crawlWork, String pageUrl, Map<String, String> resultMap, int seq) throws Exception {
         ObjectMapper mapper = new ObjectMapper();
         String json = mapper.writeValueAsString(resultMap);
 
@@ -116,13 +93,7 @@ public class StartMultipleCrawlingService {
         crawlWork.getCrawlResultItems().add(item);
         item.setCrawlWork(crawlWork);
 
-        try {
-            crawlResultItemRepository.save(item);
-        } catch (Exception e) {
-            // 반드시 예외 로그 남기기
-            e.printStackTrace();
-            throw e; // 예외 재던지기 (롤백 유도)
-        }
+        return crawlResultItemRepository.save(item);
     }
 
     @Transactional
@@ -165,6 +136,7 @@ public class StartMultipleCrawlingService {
         crawlWork.setUpdateAt(now);
 
         crawlWorkRepository.save(crawlWork);
+        crawlProgressPushService.pushProgress(crawlWork);
     }
 
     @Transactional

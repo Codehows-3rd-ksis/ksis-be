@@ -286,19 +286,18 @@ public class CrawlService {
 
         // 클릭 가능한 위치로 스크롤
         js.executeScript("arguments[0].scrollIntoView(true);", linkEl);
-        Thread.sleep(300);
 
         // 현재 URL (변화 감지용)
-        String before = driver.getCurrentUrl();
+        String before = driver.getPageSource();
 
         // 클릭
         try {
             linkEl.click();
+            WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(30));
+            wait.until(webDriver -> !webDriver.getPageSource().equals(before));
         } catch (Exception e) {
             js.executeScript("arguments[0].click();", linkEl);
         }
-
-        Thread.sleep(1500); // ajax / 해시 라우팅 대기
 
         String after = driver.getCurrentUrl();
 

@@ -53,48 +53,21 @@ public class StartMultipleCrawlingService {
                 .isDelete("N")
                 .crawlResultItems(new ArrayList<>())
                 .build();
-        return crawlWorkRepository.save(crawlWork);
+        return crawlWorkRepository.saveAndFlush(crawlWork);
     }
 
     public void startMultipleCrawling(Long settingId, User user) {
         Setting setting = settingRepository.findBySettingIdAndIsDeleteWithConditions(settingId)
                 .orElseThrow(() -> new RuntimeException("유효하지 않은 설정입니다."));
-
         CrawlWork crawlWork = createCrawlWork(setting, user);
-
         WebDriver driver = null;
         try {
             driver = webDriverFactory.createDriver(setting.getUserAgent());
             driver.get(setting.getUrl());
 
             //목록페이지에서 상세 url 추출
-            List<String> detailUrls = extractDetailUrlsMulti.extractDetailUrls(driver, setting);
-            System.out.println("Detail URLs size: " + detailUrls.size());
-            detailUrls.forEach(System.out::println);
+            int failCount = extractDetailUrlsMulti.extractDetailUrls(crawlWork, driver, setting);
 
-            int seq = 1;
-            int failCount = 0;
-            int totalCount = detailUrls.size();
-//            int collectCount = 0;
-
-            for (String detailUrl : detailUrls) {
-                CrawlResultItem resultItem = null;
-                try {
-                    driver.get(detailUrl);
-                    Map<String, String> result = crawlDetailPage(driver, setting);
-                    resultItem = saveResultItem(crawlWork, detailUrl, result, seq);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    failCount++;
-                    resultItem = crawlingFailService.saveFailedResultMulti(crawlWork.getWorkId(), detailUrl, (long) seq);
-                } finally {
-                    incrementCollectCount(crawlWork);
-//                    collectCount++;
-                    updateCollectProgress(crawlWork, failCount, totalCount);
-                    crawlProgressPushService.pushCollect(crawlWork, resultItem);
-                    seq++;
-                }
-            }
             updateCrawlWorkFinalStatus(crawlWork, failCount);
         }finally {
             if (driver != null) {

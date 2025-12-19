@@ -1,24 +1,43 @@
 package com.codehows.ksisbe.crawling.service;
 
+import com.codehows.ksisbe.crawling.entity.CrawlResultItem;
+import com.codehows.ksisbe.crawling.entity.CrawlWork;
+import com.codehows.ksisbe.crawling.repository.CrawlResultItemRepository;
+import com.codehows.ksisbe.crawling.repository.CrawlWorkRepository;
+import com.codehows.ksisbe.setting.entity.Conditions;
 import com.codehows.ksisbe.setting.entity.Setting;
 import com.codehows.ksisbe.setting.repository.SettingRepository;
+import com.codehows.ksisbe.status.service.CrawlProgressPushService;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.openqa.selenium.*;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
 public class ExtractDetailUrlsMulti {
 
     private final SettingRepository settingRepository;
+    private final CrawlResultItemRepository crawlResultItemRepository;
+    private final CrawlWorkRepository crawlWorkRepository;
+    private final CrawlingFailService crawlingFailService;
+    private final CrawlProgressPushService crawlProgressPushService;
 
-    protected List<String> extractDetailUrls(WebDriver driver, Setting setting) {
-        List<String> detailUrls = new ArrayList<>();
+    protected int extractDetailUrls(CrawlWork crawlWork,  WebDriver driver, Setting setting) {
+        int failCount = 0;
+
+//        CrawlWork crawlWork = crawlWorkRepository.findByWorkId(workId)
+//                .orElseThrow(EntityNotFoundException::new);
 
         String pagingType = setting.getPagingType();
         int maxPage = setting.getMaxPage();
@@ -27,13 +46,13 @@ public class ExtractDetailUrlsMulti {
         String pagingArea = setting.getPagingArea();
         String pagingNextbtn = setting.getPagingNextbtn();
 
+        int currentPage = 1;
         switch (pagingType) {
             case "Numeric":
-                int currentPageNum = 1;
                 boolean hasNextPagingGroup = true;
 
-                while (hasNextPagingGroup && currentPageNum <= maxPage) {
-                    boolean clicked = clickpageNumber(driver, pagingArea, currentPageNum);
+                while (hasNextPagingGroup && currentPage <= maxPage) {
+                    boolean clicked = clickpageNumber(driver, pagingArea, currentPage);
                     if (!clicked) {
                         if (clickNextButton(driver, pagingNextbtn)) {
                             waitForPageLoad(driver, setting);
@@ -45,10 +64,10 @@ public class ExtractDetailUrlsMulti {
                     }
                     waitForPageLoad(driver, setting);
 
-                    detailUrls.addAll(extractLinksFromListArea(driver, listArea, linkArea));
+                    failCount += crawlPageFromListArea(crawlWork, currentPage, driver, listArea, linkArea, setting);
 
-                    currentPageNum++;
-                    if (currentPageNum > maxPage) {
+                    currentPage++;
+                    if (currentPage > maxPage) {
                         break;
                     }
                 }
@@ -56,19 +75,19 @@ public class ExtractDetailUrlsMulti {
             case "Next_Btn":
                 boolean hasNextPage = true;
                 while (hasNextPage) {
-                    detailUrls.addAll(extractLinksFromListArea(driver, listArea, linkArea));
+                    failCount += crawlPageFromListArea(crawlWork, currentPage, driver, listArea, linkArea, setting);
 
                     if (clickNextButton(driver, pagingNextbtn)) {
                         waitForPageLoad(driver, setting);
                     } else {
                         hasNextPage = false;
                     }
+                    currentPage++;
                 }
                 break;
             case "AJAX":
-                int currentAjaxPage = 1;
-                while (currentAjaxPage <= maxPage) {
-                    detailUrls.addAll(extractLinksFromListArea(driver, listArea, linkArea));
+                while (currentPage <= maxPage) {
+                    failCount += crawlPageFromListArea(crawlWork, currentPage, driver, listArea, linkArea, setting);
 
                     if (pagingNextbtn != null && !pagingNextbtn.isEmpty()) {
                         // 다음 AJAX 버튼 클릭
@@ -84,11 +103,11 @@ public class ExtractDetailUrlsMulti {
                         waitForAjaxLoad(driver, setting);
                     }
 
-                    currentAjaxPage++;
+                    currentPage++;
                 }
                 break;
         }
-        return detailUrls;
+        return failCount;
     }
 
     private void waitForPageLoad(WebDriver driver, Setting setting) {
@@ -139,8 +158,9 @@ public class ExtractDetailUrlsMulti {
         return false;
     }
 
-    private List<String> extractLinksFromListArea(WebDriver driver, String listArea, String linkArea) {
-        List<String> links = new ArrayList<>();
+    private int crawlPageFromListArea(CrawlWork crawlWork, int pageNum, WebDriver driver, String listArea, String linkArea, Setting setting) {
+        int failCount = 0;
+        int seq = 1;
 
         try {
             WebElement listRoot = driver.findElement(By.cssSelector(listArea));
@@ -162,8 +182,9 @@ public class ExtractDetailUrlsMulti {
 
             for (By selector : selectorPriority) {
                 List<WebElement> found = listRoot.findElements(selector);
+                int totalCount = setting.getMaxPage() * found.size();
                 if (!found.isEmpty()) {
-                    for (int i = 0; i < found.size(); i++) {
+                    for (int i = 0; i < found.size(); i++, seq++) {
                         WebElement freshListRoot = driver.findElement(By.cssSelector(listArea));
                         List<WebElement> freshFound = freshListRoot.findElements(selector);
 
@@ -183,8 +204,22 @@ public class ExtractDetailUrlsMulti {
 
                         // 현재 URL 가져오기
                         String currentUrl = driver.getCurrentUrl();
-//                            System.out.println("URL :" + currentUrl);
-                        links.add(currentUrl);
+
+                        //디테일 페이지 수집
+                        CrawlResultItem resultItem = null;
+                        try{
+                            Map<String, String> result = crawlDetailPage(driver, setting);
+                            resultItem = saveResultItem(crawlWork, currentUrl, result, found.size() * (pageNum-1) + seq);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                            failCount++;
+                            resultItem = crawlingFailService.saveFailedResultMulti(crawlWork.getWorkId(), currentUrl, (long) seq);
+                        }finally {
+                            crawlWork.setCollectCount(crawlWork.getCollectCount() + 1);
+                            crawlWorkRepository.saveAndFlush(crawlWork);
+                            updateCollectProgress(crawlWork, failCount, totalCount);
+                            crawlProgressPushService.pushCollect(crawlWork, resultItem);
+                        }
 
                         // 다시 원래 페이지로 돌아가기
                         driver.navigate().back();
@@ -200,6 +235,88 @@ public class ExtractDetailUrlsMulti {
         } catch (Exception e) {
             System.out.println("Flexible extract error: " + e.getMessage());
         }
-        return links;
+        return failCount;
+    }
+
+    public void updateCollectProgress(CrawlWork crawlWork, int failCount, int totalCount) {
+        int collectCount = crawlWork.getCollectCount();
+        double progress = ((double) collectCount / totalCount) * 100;
+
+        crawlWork.setProgress(progress);
+        crawlWork.setFailCount(failCount);
+        crawlWork.setTotalCount(totalCount);
+        crawlWork.setUpdateAt(LocalDateTime.now());
+
+        LocalDateTime now = LocalDateTime.now();
+
+
+        // 경과 시간 (초)
+        long elapsedSeconds = java.time.Duration.between(crawlWork.getStartAt(), now).getSeconds();
+
+        if (collectCount > 0) {  // 0일 때는 나누기 불가 → null 유지
+            // 평균 처리 속도 (초/건)
+            double avgSpeed = (double) elapsedSeconds / collectCount;
+
+            // 남은 건수
+            int remainingCount = totalCount - collectCount;
+
+            // 예상 남은 시간(초)
+            long estimatedRemainSeconds = (long) (remainingCount * avgSpeed);
+
+            // 예상 완료 시간
+            LocalDateTime expectEndAt = now.plusSeconds(estimatedRemainSeconds);
+            crawlWork.setExpectEndAt(expectEndAt);
+        }
+
+        crawlWork.setUpdateAt(now);
+
+        crawlWorkRepository.save(crawlWork);
+        crawlProgressPushService.pushProgress(crawlWork);
+    }
+
+    private CrawlResultItem saveResultItem(CrawlWork crawlWork, String pageUrl, Map<String, String> resultMap, int seq) throws Exception {
+        ObjectMapper mapper = new ObjectMapper();
+        String json = mapper.writeValueAsString(resultMap);
+
+        CrawlResultItem item = CrawlResultItem.builder()
+                .crawlWork(crawlWork)
+                .seq((long) seq)
+                .pageUrl(pageUrl)
+                .resultValue(json)
+                .state("SUCCESS")
+                .createAt(LocalDateTime.now())
+                .updateAt(LocalDateTime.now())
+                .build();
+        crawlWork.getCrawlResultItems().add(item);
+        item.setCrawlWork(crawlWork);
+
+        return crawlResultItemRepository.save(item);
+    }
+
+    private Map<String, String> crawlDetailPage(WebDriver driver, Setting setting) {
+        List<Conditions> conditions = setting.getConditions();
+        Map<String, String> resultMap = new HashMap<>();
+
+        for (Conditions c : conditions) {
+            String selector = c.getConditionsValue();
+            try {
+                WebElement element = driver.findElement(By.cssSelector(selector));
+                String attr = c.getAttr();
+                String value;
+                if ("text".equals(attr)) {
+                    value = element.getText();
+                } else if ("href".equals(attr)) {
+                    value = element.getAttribute("href");
+                } else if ("src".equals(attr)) {
+                    value = element.getAttribute("src");
+                } else {
+                    value = element.getAttribute(attr);
+                }
+                resultMap.put(c.getConditionsKey(), value);
+            } catch (java.util.NoSuchElementException e) {
+                resultMap.put(c.getConditionsKey(), null);
+            }
+        }
+        return resultMap;
     }
 }

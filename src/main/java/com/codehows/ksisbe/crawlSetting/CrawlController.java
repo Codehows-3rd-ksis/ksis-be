@@ -75,10 +75,8 @@ public class CrawlController {
             // 1) 드라이버 생성
             driver = crawlService.createDriver();
             driver.get(url);
-            Thread.sleep(1000);
 
             WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
-
             // 2) 리스트 영역 찾기
             WebElement listRoot = wait.until(
                     ExpectedConditions.presenceOfElementLocated(By.cssSelector(listAreaSelector))

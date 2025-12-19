@@ -66,7 +66,7 @@ public class HistoryController {
 
 
     //이력상세조회
-    @GetMapping("/history/detail/{workId}")
+    @GetMapping("/history/result/{workId}")
     public ResponseEntity<?> findStatusDetail(
             @PathVariable Long workId,
             Authentication authentication

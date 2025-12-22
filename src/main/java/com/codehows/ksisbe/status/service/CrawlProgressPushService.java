@@ -84,7 +84,7 @@ public class CrawlProgressPushService {
                 )
                 .crawlResultItem(
                         CrawlResultItemDto.builder()
-                                .id(crawlResultItem.getItemId())
+                                .itemId(crawlResultItem.getItemId())
                                 .seq(crawlResultItem.getSeq())
                                 .resultValue(crawlResultItem.getResultValue())
                                 .state(crawlResultItem.getState())

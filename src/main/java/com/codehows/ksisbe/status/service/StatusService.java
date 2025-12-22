@@ -39,11 +39,11 @@ public class StatusService {
 
         // 관리자 → 전체 조회
         if ("ROLE_ADMIN".equals(user.getRole())) {
-            works = crawlWorkRepository.findAllByIsDeleteAndState("N","RUNNING");
+            works = crawlWorkRepository.findAllByIsDeleteAndStateOrderByCreateAtDesc("N","RUNNING");
         }
         // 일반 사용자 → 본인 작업만
         else {
-            works = crawlWorkRepository.findAllByStartedByAndIsDeleteAndState(user, "N", "RUNNING");
+            works = crawlWorkRepository.findAllByStartedByAndIsDeleteAndStateOrderByCreateAtDesc(user, "N", "RUNNING");
         }
 
         // Entity → DTO 변환

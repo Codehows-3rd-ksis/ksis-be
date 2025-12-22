@@ -9,10 +9,10 @@ import java.util.Optional;
 
 public interface CrawlWorkRepository extends JpaRepository<CrawlWork,Long> {
     // 관리자용
-    List<CrawlWork> findAllByIsDeleteAndState(String isDelete, String state);
+    List<CrawlWork> findAllByIsDeleteAndStateOrderByCreateAtDesc(String isDelete, String state);
 
     // 일반 사용자용
-    List<CrawlWork> findAllByStartedByAndIsDeleteAndState(User user, String isDelete, String state);
+    List<CrawlWork> findAllByStartedByAndIsDeleteAndStateOrderByCreateAtDesc(User user, String isDelete, String state);
 
     Optional<CrawlWork> findByWorkIdAndStartedByUsername(Long workId, String username);
     Optional<CrawlWork> findByWorkId(Long workId);

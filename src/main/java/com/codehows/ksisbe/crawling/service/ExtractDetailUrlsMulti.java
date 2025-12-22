@@ -213,12 +213,13 @@ public class ExtractDetailUrlsMulti {
                         } catch (Exception e) {
                             e.printStackTrace();
                             failCount++;
-                            resultItem = crawlingFailService.saveFailedResultMulti(crawlWork.getWorkId(), currentUrl, (long) seq);
+                            resultItem = crawlingFailService.saveFailedResultMulti(crawlWork.getWorkId(), currentUrl, ((long) found.size() * (pageNum-1) + seq) );
                         }finally {
                             crawlWork.setCollectCount(crawlWork.getCollectCount() + 1);
                             crawlWorkRepository.saveAndFlush(crawlWork);
                             updateCollectProgress(crawlWork, failCount, totalCount);
                             crawlProgressPushService.pushCollect(crawlWork, resultItem);
+                            failCount = 0;
                         }
 
                         // 다시 원래 페이지로 돌아가기
@@ -235,6 +236,7 @@ public class ExtractDetailUrlsMulti {
         } catch (Exception e) {
             System.out.println("Flexible extract error: " + e.getMessage());
         }
+
         return failCount;
     }
 
@@ -243,7 +245,7 @@ public class ExtractDetailUrlsMulti {
         double progress = ((double) collectCount / totalCount) * 100;
 
         crawlWork.setProgress(progress);
-        crawlWork.setFailCount(failCount);
+        crawlWork.setFailCount(crawlWork.getFailCount() + failCount);
         crawlWork.setTotalCount(totalCount);
         crawlWork.setUpdateAt(LocalDateTime.now());
 

@@ -68,7 +68,7 @@ public class StartMultipleCrawlingService {
             //목록페이지에서 상세 url 추출
             int failCount = extractDetailUrlsMulti.extractDetailUrls(crawlWork, driver, setting);
 
-            updateCrawlWorkFinalStatus(crawlWork, failCount);
+            updateCrawlWorkFinalStatus(crawlWork);
         }finally {
             if (driver != null) {
                 driver.quit();
@@ -140,13 +140,13 @@ public class StartMultipleCrawlingService {
     }
 
     @Transactional
-    public void updateCrawlWorkFinalStatus(CrawlWork crawlWork, int failCount) {
+    public void updateCrawlWorkFinalStatus(CrawlWork crawlWork) {
         int total = crawlWork.getTotalCount();
-        int successCount = total - failCount;
+        int successCount = total - crawlWork.getFailCount();
 
         // 최종 상태 결정
         String finalState;
-        if (failCount == 0) {
+        if (crawlWork.getFailCount() == 0) {
             finalState = "SUCCESS";                 // 전체 성공
         } else if (successCount == 0) {
             finalState = "FAILED";                  // 전체 실패

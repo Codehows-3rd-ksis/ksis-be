@@ -8,7 +8,7 @@ import lombok.Setter;
 @Setter
 @Builder
 public class CrawlResultItemDto {
-    private Long id;
+    private Long itemId;
     private Long seq;
     private Object resultValue;
     private String state;

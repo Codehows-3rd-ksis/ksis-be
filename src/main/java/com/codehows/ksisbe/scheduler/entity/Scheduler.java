@@ -7,6 +7,7 @@ import lombok.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(name = "scheduler")
@@ -39,11 +40,11 @@ public class Scheduler {
     @Column(name = "cron_expression", nullable = false, length = 50)
     private String cronExpression;
 
-    @Column(name = "job_name", nullable = false, length = 20)
-    private String jobName;
+    @Column(name = "days_of_week", nullable = false, length = 20)
+    private String daysOfWeek;
 
-    @Column(name = "job_parameters", nullable = false, columnDefinition = "TEXT")
-    private String jobParameters;
+    @Column(name = "week_of_month", nullable = false, length = 10)
+    private String weekOfMonth;
 
     @Column(name = "create_at", nullable = false)
     private LocalDateTime createAt;

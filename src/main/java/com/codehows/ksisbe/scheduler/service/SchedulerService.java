@@ -97,7 +97,7 @@ public class SchedulerService {
             case "2" -> "두번째 주";
             case "3" -> "세번째 주";
             case "4" -> "네번째 주";
-            case "LAST" -> "마지막 주";
+            case "L" -> "마지막 주";
             default -> "";
         };
         String daysKorean = schedulerResqestDto.getDaysOfWeek().stream()
@@ -142,4 +142,8 @@ public class SchedulerService {
     ) {
         return displayCycle + " " + displayTime;
     }
+
+    //스케줄러 수정
+
+
 }

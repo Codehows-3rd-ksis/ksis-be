@@ -40,11 +40,35 @@ public class Scheduler {
     @Column(name = "cron_expression", nullable = false, length = 50)
     private String cronExpression;
 
-    @Column(name = "days_of_week", nullable = false, length = 20)
+    @Column(name = "days_of_week", nullable = false, length = 50)
     private String daysOfWeek;
 
     @Column(name = "week_of_month", nullable = false, length = 10)
     private String weekOfMonth;
+
+    //검색용컬럼
+    @Column(name = "execute_hour", nullable = false)
+    private Integer executeHour;
+
+    @Column(name = "execute_minute", nullable = false)
+    private Integer executeMinute;
+
+    @Column(name = "display_cycle", nullable = false, length = 50)
+    private String displayCycle;
+
+    @Column(name = "display_cycle_compact", nullable = false)
+    private String displayCycleCompact;
+
+    @Column(name = "display_time", nullable = false, length = 30)
+    private String displayTime;
+
+    @Column(name = "display_time_compact", nullable = false)
+    private String displayTimeCompact;
+
+    @Column(name = "search_text", nullable = false, length = 200)
+    private String searchText;
+
+
 
     @Column(name = "create_at", nullable = false)
     private LocalDateTime createAt;
@@ -54,5 +78,4 @@ public class Scheduler {
 
     @Column(name = "is_delete", nullable = false, length = 1)
     private String isDelete = "N";
-
 }

@@ -57,21 +57,28 @@ public class SchedulerRepositoryImpl implements SchedulerRepositoryCustom {
 
                 case "cycle":
                     builder.and(
-                            scheduler.daysOfWeek.contains(request.getKeyword())
-                                    .or(scheduler.weekOfMonth.eq(request.getKeyword()))
+                            scheduler.displayCycleCompact.contains(
+                                    request.getKeyword().replaceAll("\\s+", "")
+                            )
                     );
                     break;
 
-                case "time":
-                    builder.and(scheduler.cronExpression.contains(request.getKeyword()));
+                case "collectAt":
+                    builder.and(
+                            scheduler.displayTimeCompact.contains(
+                                    request.getKeyword().replaceAll("\\s+", "")
+                            )
+                    );
                     break;
 
                 case "all":
                 default:
+                    String keywordCompact = request.getKeyword().replaceAll("\\s+", "");
+
                     builder.andAnyOf(
                             setting.settingName.contains(request.getKeyword()),
-                            scheduler.daysOfWeek.contains(request.getKeyword()),
-                            scheduler.cronExpression.contains(request.getKeyword())
+                            scheduler.displayCycleCompact.contains(keywordCompact),
+                            scheduler.displayTimeCompact.contains(keywordCompact)
                     );
             }
         }

@@ -11,6 +11,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class SchedulerRequestDto {
+    private Long schedulerId;
     private Long settingId;
     private String cronExpression;
     private List<String> daysOfWeek;

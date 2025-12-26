@@ -31,6 +31,9 @@ public class Scheduler {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
+    @Column(name = "origin_id")
+    private Long originId;
+
     @Column(name = "start_date")
     private LocalDate startDate;
 

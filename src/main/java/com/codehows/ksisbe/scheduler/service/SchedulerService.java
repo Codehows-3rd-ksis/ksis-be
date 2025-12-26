@@ -144,6 +144,71 @@ public class SchedulerService {
     }
 
     //스케줄러 수정
+    public void updateScheduler(String username, Long schedulerId, SchedulerRequestDto schedulerRequestDto) {
+        Scheduler originScheduler = schedulerRepository.findByScheduleIdAndIsDelete(schedulerRequestDto.getSchedulerId(), "N")
+                .orElseThrow(() -> new RuntimeException("유효하지 않은 스케줄러아이디"));
+        User user = userRepository.findByUsernameAndIsDelete(username, "N")
+                .orElseThrow(() -> new RuntimeException("유효하지 않은 유저아이디"));
+        Setting setting = settingRepository.findBySettingIdAndIsDelete(schedulerRequestDto.getSettingId(), "N")
+                .orElseThrow(() -> new RuntimeException("유효하지 않은 설정"));
 
+        if (!user.getRole().equals("ROLE_ADMIN") && !originScheduler.getUser().getId().equals(user.getId())) {
+            throw new RuntimeException("수정 권한 없음");
+        }
 
+        originScheduler.setIsDelete("Y");
+        originScheduler.setUpdateAt(LocalDateTime.now());
+        schedulerRepository.save(originScheduler);
+
+        String daysOfWeekStr = String.join(
+                ",",
+                schedulerRequestDto.getDaysOfWeek()
+        );
+        int executeHour = parseExecuteHour(schedulerRequestDto);
+        int executeMinute = parseExecuteMinute(schedulerRequestDto);
+
+        String displayCycle = createDisplayCycle(schedulerRequestDto);
+        String displayTime = createDisplayTime(executeHour, executeMinute);
+
+        String displayCycleCompact = displayCycle.replaceAll("\\s+", "");
+        String displayTimeCompact  = displayTime.replaceAll("\\s+", "");
+
+        String searchText = createSearchText(displayCycle, displayTime);
+
+        Scheduler scheduler = Scheduler.builder()
+
+                .setting(setting)
+                .user(originScheduler.getUser())
+                .cronExpression(schedulerRequestDto.getCronExpression())
+                .daysOfWeek(daysOfWeekStr)
+                .weekOfMonth(schedulerRequestDto.getWeekOfMonth())
+                .executeHour(executeHour)
+                .executeMinute(executeMinute)
+                .displayCycle(displayCycle)
+                .displayCycleCompact(displayCycleCompact)
+                .displayTime(displayTime)
+                .displayTimeCompact(displayTimeCompact)
+                .searchText(searchText)
+                .startDate(schedulerRequestDto.getStartDate())
+                .endDate(schedulerRequestDto.getEndDate())
+                .createAt(LocalDateTime.now())
+                .originId(originScheduler.getScheduleId())
+                .isDelete("N")
+                .build();
+        schedulerRepository.save(scheduler);
+    }
+
+    //스케줄러 삭제
+    public void deleteScheduler(Long schedulerId, String username) {
+        Scheduler scheduler = schedulerRepository.findByScheduleIdAndIsDelete(schedulerId, "N")
+                .orElseThrow(() -> new RuntimeException("유효하지 않은 스케줄러아이디"));
+        User user = userRepository.findByUsernameAndIsDelete(username, "N")
+                .orElseThrow(() -> new RuntimeException("유효하지 않은 유저아이디"));
+
+        if(!user.getRole().equals("ROLE_ADMIN") && !scheduler.getUser().getId().equals(user.getId())){
+            throw new RuntimeException("삭제 권한이 없습니다.");
+        }
+        scheduler.setIsDelete("Y");
+        schedulerRepository.save(scheduler);
+    }
 }

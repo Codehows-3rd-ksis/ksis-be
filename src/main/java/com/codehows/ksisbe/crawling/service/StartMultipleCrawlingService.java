@@ -4,6 +4,7 @@ import com.codehows.ksisbe.crawling.entity.CrawlResultItem;
 import com.codehows.ksisbe.crawling.entity.CrawlWork;
 import com.codehows.ksisbe.crawling.repository.CrawlResultItemRepository;
 import com.codehows.ksisbe.crawling.repository.CrawlWorkRepository;
+import com.codehows.ksisbe.scheduler.entity.Scheduler;
 import com.codehows.ksisbe.setting.entity.Conditions;
 import com.codehows.ksisbe.setting.entity.Setting;
 import com.codehows.ksisbe.setting.repository.SettingRepository;
@@ -38,11 +39,12 @@ public class StartMultipleCrawlingService {
 //    private final WorkSaverService  workSaverService;
 
     @Transactional
-    public CrawlWork createCrawlWork(Setting setting, User user) {
+    public CrawlWork createCrawlWork(Setting setting, User user, Scheduler scheduler) {
         CrawlWork crawlWork = CrawlWork.builder()
                 .setting(setting)
-                .startedBy(user)
-                .type("수동실행")
+                .startedBy(scheduler == null ? user : null)
+                .scheduler(scheduler)
+                .type(scheduler == null ? "수동실행" : "스케줄러")
                 .state("RUNNING")
                 .failCount(0)
                 .totalCount(0)
@@ -56,10 +58,10 @@ public class StartMultipleCrawlingService {
         return crawlWorkRepository.saveAndFlush(crawlWork);
     }
 
-    public void startMultipleCrawling(Long settingId, User user) {
+    public void startMultipleCrawling(Long settingId, User user, Scheduler scheduler) {
         Setting setting = settingRepository.findBySettingIdAndIsDeleteWithConditions(settingId)
                 .orElseThrow(() -> new RuntimeException("유효하지 않은 설정입니다."));
-        CrawlWork crawlWork = createCrawlWork(setting, user);
+        CrawlWork crawlWork = createCrawlWork(setting, user, scheduler);
         WebDriver driver = null;
         try {
             driver = webDriverFactory.createDriver(setting.getUserAgent());

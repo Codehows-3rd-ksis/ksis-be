@@ -1,5 +1,8 @@
 package com.codehows.ksisbe.crawling.service;
 
+import com.codehows.ksisbe.scheduler.entity.Scheduler;
+import com.codehows.ksisbe.scheduler.repository.SchedulerRepository;
+import com.codehows.ksisbe.scheduler.service.SchedulerService;
 import com.codehows.ksisbe.setting.entity.Setting;
 import com.codehows.ksisbe.setting.repository.SettingRepository;
 import com.codehows.ksisbe.user.User;
@@ -18,9 +21,27 @@ public class CrawlingService {
     private final SettingRepository settingRepository;
     private final StartSingleCrawlingService startSingleCrawlingService;
     private final StartMultipleCrawlingService startMultipleCrawlingService;
+    private final SchedulerRepository schedulerRepository;
 
-//    @Async  /* Controller에서 taskExecutor.execute 사용중이므로 @Async를 또 쓰면 이중 비동기 */
+    //수동실행
     public void startCrawling(Long settingId, String username) {
+        startCrawlingInternal(settingId, username, null);
+    }
+
+    //스케줄러(배치전용)
+    public void startCrawlingBySchedule(
+            Long schedulerId,
+            Long settingId,
+            String username
+    ) {
+        Scheduler scheduler = schedulerRepository.findById(schedulerId)
+                .orElseThrow(() -> new RuntimeException("스케줄 없음"));
+
+        startCrawlingInternal(settingId, username, scheduler);
+    }
+
+
+    public void startCrawlingInternal(Long settingId, String username, Scheduler scheduler) {
         User user = userRepository.findByUsernameAndIsDelete(username, "N")
                 .orElseThrow(() -> new RuntimeException("유효한 유저입니다."));
 
@@ -35,7 +56,7 @@ public class CrawlingService {
             startSingleCrawlingService.startSingleCrawling(settingId, user);
         }
         else if ("다중".equalsIgnoreCase(type)) {
-            startMultipleCrawlingService.startMultipleCrawling(settingId, user);
+            startMultipleCrawlingService.startMultipleCrawling(settingId, user, scheduler);
         }
         else {
             throw new RuntimeException("알 수 없는 설정 타입니다: " + type);

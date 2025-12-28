@@ -42,7 +42,7 @@ public class StartMultipleCrawlingService {
     public CrawlWork createCrawlWork(Setting setting, User user, Scheduler scheduler) {
         CrawlWork crawlWork = CrawlWork.builder()
                 .setting(setting)
-                .startedBy(scheduler == null ? user : null)
+                .startedBy(scheduler == null ? user : scheduler.getUser())
                 .scheduler(scheduler)
                 .type(scheduler == null ? "수동실행" : "스케줄러")
                 .state("RUNNING")
@@ -76,69 +76,6 @@ public class StartMultipleCrawlingService {
                 driver.quit();
             }
         }
-    }
-
-    @Transactional
-    public CrawlResultItem saveResultItem(CrawlWork crawlWork, String pageUrl, Map<String, String> resultMap, int seq) throws Exception {
-        ObjectMapper mapper = new ObjectMapper();
-        String json = mapper.writeValueAsString(resultMap);
-
-        CrawlResultItem item = CrawlResultItem.builder()
-                .crawlWork(crawlWork)
-                .seq((long) seq)
-                .pageUrl(pageUrl)
-                .resultValue(json)
-                .state("SUCCESS")
-                .createAt(LocalDateTime.now())
-                .updateAt(LocalDateTime.now())
-                .build();
-        crawlWork.getCrawlResultItems().add(item);
-        item.setCrawlWork(crawlWork);
-
-        return crawlResultItemRepository.save(item);
-    }
-
-    @Transactional
-    public void incrementCollectCount(CrawlWork crawlWork) {
-        crawlWork.setCollectCount(crawlWork.getCollectCount() + 1);
-        crawlWorkRepository.save(crawlWork);
-    }
-
-    @Transactional
-    public void updateCollectProgress(CrawlWork crawlWork, int failCount, int totalCount) {
-        int collectCount = crawlWork.getCollectCount();
-        double progress = ((double) collectCount / totalCount) * 100;
-
-        crawlWork.setProgress(progress);
-        crawlWork.setFailCount(failCount);
-        crawlWork.setTotalCount(totalCount);
-        crawlWork.setUpdateAt(LocalDateTime.now());
-
-        LocalDateTime now = LocalDateTime.now();
-
-
-        // 경과 시간 (초)
-        long elapsedSeconds = java.time.Duration.between(crawlWork.getStartAt(), now).getSeconds();
-
-        if (collectCount > 0) {  // 0일 때는 나누기 불가 → null 유지
-            // 평균 처리 속도 (초/건)
-            double avgSpeed = (double) elapsedSeconds / collectCount;
-
-            // 남은 건수
-            int remainingCount = totalCount - collectCount;
-
-            // 예상 남은 시간(초)
-            long estimatedRemainSeconds = (long) (remainingCount * avgSpeed);
-
-            // 예상 완료 시간
-            LocalDateTime expectEndAt = now.plusSeconds(estimatedRemainSeconds);
-            crawlWork.setExpectEndAt(expectEndAt);
-        }
-
-        crawlWork.setUpdateAt(now);
-
-        crawlWorkRepository.save(crawlWork);
-        crawlProgressPushService.pushProgress(crawlWork);
     }
 
     @Transactional

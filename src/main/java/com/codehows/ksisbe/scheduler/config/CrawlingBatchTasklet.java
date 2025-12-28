@@ -10,9 +10,10 @@ import org.springframework.batch.core.step.StepContribution;
 import org.springframework.batch.core.step.tasklet.Tasklet;
 import org.springframework.batch.infrastructure.repeat.RepeatStatus;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.stereotype.Component;
 
 @Slf4j
-@Configuration
+@Component
 @RequiredArgsConstructor
 public class CrawlingBatchTasklet implements Tasklet {
 
@@ -28,11 +29,17 @@ public class CrawlingBatchTasklet implements Tasklet {
 
         Long schedulerId =  param.getLong("schedulerId");
         Long settingId = param.getLong("settingId");
-        String username =  param.getString("username");
+//        String username =  param.getString("username");
 
-        log.info("배치 크롤링 시작: schedulerId={}, settingId={}, username={}", schedulerId, settingId, username);
+        log.info("배치 크롤링 시작: schedulerId={}, settingId={}", schedulerId, settingId);
 
-        crawlingService.startCrawlingBySchedule(schedulerId, settingId, username);
+        if (schedulerId == null) {
+            throw new IllegalStateException("schedulerId가 파라미터로 넘어오지 않음");
+        }
+        if (settingId == null) {
+            throw new IllegalStateException("settingId가 파라미터로 넘어오지 않음");
+        }
+        crawlingService.startCrawlingBySchedule(schedulerId, settingId);
         return RepeatStatus.FINISHED;
     }
 }

@@ -8,9 +8,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
 public interface SchedulerRepository extends JpaRepository<Scheduler, Long> {
     Optional<Scheduler> findByScheduleIdAndIsDelete(Long scheduleId, String isDelete);
+    List<Scheduler> findAllByIsDelete(String isDelete);
 }

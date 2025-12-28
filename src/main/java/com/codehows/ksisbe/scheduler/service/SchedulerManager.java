@@ -15,6 +15,8 @@ import org.springframework.scheduling.support.CronTrigger;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+
 @Slf4j
 @Component
 public class SchedulerManager {
@@ -36,12 +38,20 @@ public class SchedulerManager {
 
     public void schedule(Scheduler scheduler) {
 
+        log.info("스케줄 등록됨 schedulerId={}, cron={}",
+                scheduler.getScheduleId(),
+                scheduler.getCronExpression());
+
+        if (!ScheduleValidator.isExecutable(scheduler)) {
+            log.info("스케줄 실행 조건 불일치 - schedulerId={}",
+                    scheduler.getScheduleId());
+            return;
+        }
         Runnable task = () -> {
             try {
                 JobParameters params = new JobParametersBuilder()
                         .addLong("schedulerId", scheduler.getScheduleId())
                         .addLong("settingId", scheduler.getSetting().getSettingId())
-                        .addString("username", scheduler.getUser().getUsername())
                         .addLong("runTime", System.currentTimeMillis()) // 중복 방지
                         .toJobParameters();
 
@@ -57,6 +67,4 @@ public class SchedulerManager {
                 new CronTrigger(scheduler.getCronExpression())
         );
     }
-
-
 }

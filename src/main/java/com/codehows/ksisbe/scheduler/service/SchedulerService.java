@@ -28,6 +28,7 @@ public class SchedulerService {
     private final UserRepository userRepository;
     private final SchedulerRepository schedulerRepository;
     private final SchedulerRepositoryCustom schedulerRepositoryCustom;
+    private final SchedulerManager schedulerManager;
 
     //스케줄러등록
     public void createScheduler(String username, SchedulerRequestDto schedulerRequestDto) {
@@ -72,6 +73,8 @@ public class SchedulerService {
                 .isDelete("N")
                 .build();
         schedulerRepository.save(scheduler);
+
+//        schedulerManager.schedule(scheduler);
     }
 
     //스케줄러설정조회
@@ -160,6 +163,8 @@ public class SchedulerService {
         originScheduler.setUpdateAt(LocalDateTime.now());
         schedulerRepository.save(originScheduler);
 
+        //스케줄러 제거할 부분 필요
+
         String daysOfWeekStr = String.join(
                 ",",
                 schedulerRequestDto.getDaysOfWeek()
@@ -196,6 +201,7 @@ public class SchedulerService {
                 .isDelete("N")
                 .build();
         schedulerRepository.save(scheduler);
+//        schedulerManager.schedule(scheduler);
     }
 
     //스케줄러 삭제
@@ -210,5 +216,7 @@ public class SchedulerService {
         }
         scheduler.setIsDelete("Y");
         schedulerRepository.save(scheduler);
+
+        //스케줄러 제거할 부분 필요
     }
 }

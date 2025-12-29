@@ -1,13 +1,18 @@
 package com.codehows.ksisbe.crawling.service;
 
+import com.codehows.ksisbe.crawling.entity.CrawlWork;
+import com.codehows.ksisbe.crawling.repository.CrawlWorkRepository;
 import com.codehows.ksisbe.setting.entity.Setting;
 import com.codehows.ksisbe.setting.repository.SettingRepository;
 import com.codehows.ksisbe.user.User;
 import com.codehows.ksisbe.user.repository.UserRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
 
 
 @Service
@@ -18,6 +23,7 @@ public class CrawlingService {
     private final SettingRepository settingRepository;
     private final StartSingleCrawlingService startSingleCrawlingService;
     private final StartMultipleCrawlingService startMultipleCrawlingService;
+    private final CrawlWorkRepository crawlWorkRepository;
 
 //    @Async  /* Controller에서 taskExecutor.execute 사용중이므로 @Async를 또 쓰면 이중 비동기 */
     public void startCrawling(Long settingId, String username) {
@@ -40,5 +46,18 @@ public class CrawlingService {
         else {
             throw new RuntimeException("알 수 없는 설정 타입니다: " + type);
         }
+    }
+
+    @Transactional
+    public void requestStop(Long workId) {
+        CrawlWork work = crawlWorkRepository.findById(workId)
+                .orElseThrow();
+
+        if (!"RUNNING".equals(work.getState())) {
+            return; // 이미 종료됨
+        }
+
+        work.setState("STOP_REQUEST");
+        work.setUpdateAt(LocalDateTime.now());
     }
 }

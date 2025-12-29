@@ -69,10 +69,13 @@ public class StartMultipleCrawlingService {
             int failCount = extractDetailUrlsMulti.extractDetailUrls(crawlWork, driver, setting);
 
             updateCrawlWorkFinalStatus(crawlWork);
-        }finally {
-            if (driver != null) {
-                driver.quit();
-            }
+        } catch (CrawlStopException e) {
+          crawlWork.setState("STOPPED");
+          crawlWork.setEndAt(LocalDateTime.now());
+          crawlWorkRepository.save(crawlWork);
+          updateCrawlWorkFinalStatus(crawlWork);
+        } finally {
+            if (driver != null) driver.quit();
         }
     }
 
@@ -151,7 +154,11 @@ public class StartMultipleCrawlingService {
         } else if (successCount == 0) {
             finalState = "FAILED";                  // 전체 실패
         } else {
-            finalState = "PARTIAL";                 // 일부 성공 [ 성공(실패건수4건)]
+            System.out.println(crawlWork.getState());
+            if ("STOPPED".equals(crawlWork.getState())
+                    || "STOP_REQUEST".equals(crawlWork.getState())) {
+                finalState = "STOPPED";
+            } else finalState = "PARTIAL";                 // 일부 성공 [ 성공(실패건수4건)]
         }
 
         crawlWork.setState(finalState);

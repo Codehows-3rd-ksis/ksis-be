@@ -22,7 +22,7 @@ public class CrawlingJobConfig {
     @Bean
     public Step crawlingStep() {
         return new StepBuilder("crawlingStep", jobRepository)
-                .tasklet(crawlingBatchTasklet, transactionManager)
+                .tasklet(crawlingBatchTasklet)
                 .build();
     }
     @Bean

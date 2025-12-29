@@ -32,6 +32,7 @@ public class ExtractDetailUrlsMulti {
     private final CrawlWorkRepository crawlWorkRepository;
     private final CrawlingFailService crawlingFailService;
     private final CrawlProgressPushService crawlProgressPushService;
+    private final CrawlResultService crawlResultService;
 
     protected int extractDetailUrls(CrawlWork crawlWork,  WebDriver driver, Setting setting) {
         int failCount = 0;
@@ -272,7 +273,8 @@ public class ExtractDetailUrlsMulti {
 
         crawlWork.setUpdateAt(now);
 
-        crawlWorkRepository.save(crawlWork);
+//        crawlWorkRepository.save(crawlWork);
+        crawlResultService.updateCrawlWorkProgress(crawlWork);
         crawlProgressPushService.pushProgress(crawlWork);
     }
 
@@ -292,7 +294,7 @@ public class ExtractDetailUrlsMulti {
         crawlWork.getCrawlResultItems().add(item);
         item.setCrawlWork(crawlWork);
 
-        return crawlResultItemRepository.save(item);
+        return crawlResultService.saveResultItemTransaction(item);
     }
 
     private Map<String, String> crawlDetailPage(WebDriver driver, Setting setting) {

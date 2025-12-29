@@ -36,9 +36,10 @@ public class StartMultipleCrawlingService {
     private final CrawlingFailService crawlingFailService;
     private final ExtractDetailUrlsMulti extractDetailUrlsMulti;
     private final CrawlProgressPushService crawlProgressPushService;
+    private final CrawlResultService crawlResultService;
 //    private final WorkSaverService  workSaverService;
 
-    @Transactional
+
     public CrawlWork createCrawlWork(Setting setting, User user, Scheduler scheduler) {
         CrawlWork crawlWork = CrawlWork.builder()
                 .setting(setting)
@@ -55,7 +56,7 @@ public class StartMultipleCrawlingService {
                 .isDelete("N")
                 .crawlResultItems(new ArrayList<>())
                 .build();
-        return crawlWorkRepository.saveAndFlush(crawlWork);
+        return crawlResultService.createCrawlWorkTransaction(crawlWork);
     }
 
     public void startMultipleCrawling(Long settingId, User user, Scheduler scheduler) {
@@ -78,7 +79,7 @@ public class StartMultipleCrawlingService {
         }
     }
 
-    @Transactional
+
     public void updateCrawlWorkFinalStatus(CrawlWork crawlWork) {
         int total = crawlWork.getTotalCount();
         int successCount = total - crawlWork.getFailCount();
@@ -97,7 +98,8 @@ public class StartMultipleCrawlingService {
         crawlWork.setEndAt(LocalDateTime.now());
         crawlWork.setUpdateAt(LocalDateTime.now());
 
-        crawlWorkRepository.save(crawlWork);
+//        crawlWorkRepository.save(crawlWork);
+        crawlResultService.updateFinalTransaction(crawlWork);
     }
 
     private Map<String, String> crawlDetailPage(WebDriver driver, Setting setting) {

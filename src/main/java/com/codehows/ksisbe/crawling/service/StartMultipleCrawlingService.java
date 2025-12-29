@@ -70,10 +70,9 @@ public class StartMultipleCrawlingService {
 
             updateCrawlWorkFinalStatus(crawlWork);
         } catch (CrawlStopException e) {
-          crawlWork.setState("STOPPED");
-          crawlWork.setEndAt(LocalDateTime.now());
-          crawlWorkRepository.save(crawlWork);
-          updateCrawlWorkFinalStatus(crawlWork);
+            crawlWork.setState("STOPPED");
+            crawlWork.setEndAt(LocalDateTime.now());
+            crawlWorkRepository.saveAndFlush(crawlWork);
         } finally {
             if (driver != null) driver.quit();
         }
@@ -144,6 +143,11 @@ public class StartMultipleCrawlingService {
 
     @Transactional
     public void updateCrawlWorkFinalStatus(CrawlWork crawlWork) {
+        String currentState = crawlWorkRepository.findState(crawlWork.getWorkId());
+        if ("STOP_REQUEST".equals(currentState) || "STOPPED".equals(currentState)) {
+            return; // 상태 업데이트 금지
+        }
+
         int total = crawlWork.getTotalCount();
         int successCount = total - crawlWork.getFailCount();
 
@@ -154,11 +158,7 @@ public class StartMultipleCrawlingService {
         } else if (successCount == 0) {
             finalState = "FAILED";                  // 전체 실패
         } else {
-            System.out.println(crawlWork.getState());
-            if ("STOPPED".equals(crawlWork.getState())
-                    || "STOP_REQUEST".equals(crawlWork.getState())) {
-                finalState = "STOPPED";
-            } else finalState = "PARTIAL";                 // 일부 성공 [ 성공(실패건수4건)]
+            finalState = "PARTIAL";                 // 일부 성공 [ 성공(실패건수4건)]
         }
 
         crawlWork.setState(finalState);

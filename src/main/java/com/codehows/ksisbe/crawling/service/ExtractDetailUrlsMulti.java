@@ -213,9 +213,9 @@ public class ExtractDetailUrlsMulti {
                         //디테일 페이지 수집
                         CrawlResultItem resultItem = null;
                         try{
-                            checkStop(crawlWork);
                             Map<String, String> result = crawlDetailPage(driver, setting);
                             resultItem = saveResultItem(crawlWork, currentUrl, result, found.size() * (pageNum-1) + seq);
+                            checkStop(crawlWork);
                         } catch (CrawlStopException e) {
                             throw e;
                         } catch (Exception e) {
@@ -224,7 +224,10 @@ public class ExtractDetailUrlsMulti {
                             resultItem = crawlingFailService.saveFailedResultMulti(crawlWork.getWorkId(), currentUrl, ((long) found.size() * (pageNum-1) + seq) );
                         }finally {
                             crawlWork.setCollectCount(crawlWork.getCollectCount() + 1);
-                            crawlWorkRepository.saveAndFlush(crawlWork);
+                            String currentState = crawlWorkRepository.findState(crawlWork.getWorkId());
+                            if (!"STOP_REQUEST".equals(currentState) && !"STOPPED".equals(currentState)) {
+                                crawlWorkRepository.saveAndFlush(crawlWork);
+                            }
                             updateCollectProgress(crawlWork, failCount, totalCount);
                             crawlProgressPushService.pushCollect(crawlWork, resultItem);
                             failCount = 0;
@@ -251,6 +254,11 @@ public class ExtractDetailUrlsMulti {
     }
 
     public void updateCollectProgress(CrawlWork crawlWork, int failCount, int totalCount) {
+        String currentState = crawlWorkRepository.findState(crawlWork.getWorkId());
+        if ("STOP_REQUEST".equals(currentState) || "STOPPED".equals(currentState)) {
+            return; // 상태 업데이트 금지
+        }
+
         int collectCount = crawlWork.getCollectCount();
         double progress = ((double) collectCount / totalCount) * 100;
 

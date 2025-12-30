@@ -10,7 +10,7 @@ import org.springframework.batch.infrastructure.repeat.RepeatStatus;
 
 @Slf4j
 @RequiredArgsConstructor
-public class CrawlingBatchTasklet implements Tasklet {
+public class CrawlingSchedulerTasklet implements Tasklet {
 
     private final CrawlingService crawlingService;
 

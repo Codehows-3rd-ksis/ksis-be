@@ -111,9 +111,10 @@ public class StatusService {
         basicInfo.setSettingName(work.getSetting().getSettingName());
         basicInfo.setType(work.getType());
         basicInfo.setUserId(work.getStartedBy().getUsername());
-//            basicInfo.setStartDate(work.getStartDate());
-//            basicInfo.setEndDate(work.getEndDate());
-//            basicInfo.setCycle(work.getCycle());
+        basicInfo.setStartDate(work.getScheduler().getStartDate());
+        basicInfo.setEndDate(work.getScheduler().getEndDate());
+        basicInfo.setPeriod(work.getScheduler().getStartDate() + " ~ " + work.getScheduler().getEndDate());
+        basicInfo.setCycle(work.getScheduler().getSearchText());
         basicInfo.setStartAt(work.getStartAt());
         basicInfo.setEndAt(work.getEndAt());
         basicInfo.setState(work.getState());

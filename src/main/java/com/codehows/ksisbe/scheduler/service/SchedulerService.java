@@ -74,7 +74,7 @@ public class SchedulerService {
                 .build();
         schedulerRepository.save(scheduler);
 
-//        schedulerManager.schedule(scheduler);
+        schedulerManager.schedule(scheduler);
     }
 
     //스케줄러설정조회
@@ -100,6 +100,7 @@ public class SchedulerService {
             case "2" -> "두번째 주";
             case "3" -> "세번째 주";
             case "4" -> "네번째 주";
+            case "5" -> "다섯번째 주";
             case "L" -> "마지막 주";
             default -> "";
         };
@@ -201,7 +202,7 @@ public class SchedulerService {
                 .isDelete("N")
                 .build();
         schedulerRepository.save(scheduler);
-//        schedulerManager.schedule(scheduler);
+        schedulerManager.schedule(scheduler);
     }
 
     //스케줄러 삭제
@@ -217,6 +218,6 @@ public class SchedulerService {
         scheduler.setIsDelete("Y");
         schedulerRepository.save(scheduler);
 
-        //스케줄러 제거할 부분 필요
+        schedulerManager.schedule(scheduler);
     }
 }

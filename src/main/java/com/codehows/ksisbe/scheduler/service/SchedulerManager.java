@@ -31,6 +31,12 @@ public class SchedulerManager {
 
     public void schedule(Scheduler scheduler) {
 
+        if (!ScheduleValidator.isExecutable(scheduler)) {
+            log.info("스케줄 실행 조건 불일치 - schedulerId={}",
+                    scheduler.getScheduleId());
+            return;
+        }
+
         Runnable task = () -> {
             Long schedulerId = scheduler.getScheduleId();
             Long settingId   = scheduler.getSetting().getSettingId();

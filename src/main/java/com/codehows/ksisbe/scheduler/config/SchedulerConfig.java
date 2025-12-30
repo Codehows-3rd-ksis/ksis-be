@@ -6,16 +6,13 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 
 @Configuration
-@EnableScheduling
 public class SchedulerConfig {
 
     @Bean(name = "schedulerTaskScheduler")
-    public ThreadPoolTaskScheduler threadPoolTaskScheduler() {
+    public ThreadPoolTaskScheduler schedulerTaskScheduler() {
         ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
-        scheduler.setPoolSize(5);              // 동시에 돌 스케줄 수
+        scheduler.setPoolSize(5);
         scheduler.setThreadNamePrefix("schedule-");
-        scheduler.setWaitForTasksToCompleteOnShutdown(true);
-        scheduler.setAwaitTerminationSeconds(30);
         scheduler.initialize();
         return scheduler;
     }

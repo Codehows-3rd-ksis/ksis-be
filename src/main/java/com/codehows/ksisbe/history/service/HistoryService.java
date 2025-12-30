@@ -53,9 +53,10 @@ public class HistoryService {
                 .startedBy(crawlWork.getStartedBy() != null ? crawlWork.getStartedBy().getId() : null)
                 .username(crawlWork.getStartedBy() != null ? crawlWork.getStartedBy().getUsername() : null)
                 .scheduleId(crawlWork.getScheduler() != null ? crawlWork.getScheduler().getScheduleId() : null)
-                .startDate(crawlWork.getScheduler() != null ? crawlWork.getScheduler().getStartDate() : null)
-                .endDate(crawlWork.getScheduler() != null ? crawlWork.getScheduler().getEndDate() : null)
-                .period(crawlWork.getScheduler() != null ? crawlWork.getScheduler().getCronExpression() : null)
+                .period(crawlWork.getScheduler() != null ? crawlWork.getScheduler().getStartDate() + " ~ " + crawlWork.getScheduler().getEndDate() : null)
+//                .startDate(crawlWork.getScheduler() != null ? crawlWork.getScheduler().getStartDate() : null)
+//                .endDate(crawlWork.getScheduler() != null ? crawlWork.getScheduler().getEndDate() : null)
+                .searchText(crawlWork.getScheduler() != null ? crawlWork.getScheduler().getSearchText() : null)
                 .failCount(crawlWork.getFailCount())
                 .state(crawlWork.getState())
                 .type(crawlWork.getType())
@@ -64,24 +65,6 @@ public class HistoryService {
                 .build()
         );
     }
-
-    private CrawlWorkHistory toDto(CrawlWork entity) {
-        return CrawlWorkHistory.builder()
-                .workId(entity.getWorkId())
-                .settingId(entity.getSetting() != null ? entity.getSetting().getSettingId() : null)
-                .settingName(entity.getSetting() != null ? entity.getSetting().getSettingName() : null)
-                .userId(entity.getSetting() != null ? entity.getSetting().getUser().getId() : null)
-                .username(entity.getSetting() != null ? entity.getSetting().getUser().getUsername() : null)
-                .scheduleId(entity.getScheduler() != null ? entity.getScheduler().getScheduleId() : null)
-                .startedBy(entity.getStartedBy() != null ? entity.getStartedBy().getId() : null)
-                .failCount(entity.getFailCount() != null ? entity.getFailCount().intValue() : 0)
-                .state(entity.getState())
-                .type(entity.getType())
-                .startAt(entity.getStartAt())
-                .endAt(entity.getEndAt())
-                .build();
-    }
-
 
     //상세조회
     @Transactional
@@ -173,9 +156,10 @@ public class HistoryService {
                 .startedBy(crawlWork.getStartedBy() != null ? crawlWork.getStartedBy().getId() : null)
                 .username(crawlWork.getStartedBy() != null ? crawlWork.getStartedBy().getUsername() : null)
                 .scheduleId(crawlWork.getScheduler() != null ? crawlWork.getScheduler().getScheduleId() : null)
-                .startDate(crawlWork.getScheduler() != null ? crawlWork.getScheduler().getStartDate() : null)
-                .endDate(crawlWork.getScheduler() != null ? crawlWork.getScheduler().getEndDate() : null)
-                .period(crawlWork.getScheduler() != null ? crawlWork.getScheduler().getCronExpression() : null)
+                .period(crawlWork.getScheduler() != null ? crawlWork.getScheduler().getStartDate() + " ~ " + crawlWork.getScheduler().getEndDate() : null)
+//                .startDate(crawlWork.getScheduler() != null ? crawlWork.getScheduler().getStartDate() : null)
+//                .endDate(crawlWork.getScheduler() != null ? crawlWork.getScheduler().getEndDate() : null)
+                .searchText(crawlWork.getScheduler() != null ? crawlWork.getScheduler().getSearchText() : null)
                 .failCount(crawlWork.getFailCount())
                 .state(crawlWork.getState())
                 .type(crawlWork.getType())

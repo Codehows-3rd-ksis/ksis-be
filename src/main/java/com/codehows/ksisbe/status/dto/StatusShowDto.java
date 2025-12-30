@@ -3,6 +3,7 @@ package com.codehows.ksisbe.status.dto;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Date;
 
@@ -14,8 +15,9 @@ public class StatusShowDto {
     private String userId;
     private String type;
     private LocalDateTime startAt;
-    private LocalDateTime startDate;
-    private LocalDateTime endDate;
-    private String cycle;
+//    private LocalDate startDate;
+//    private LocalDate endDate;
+    private String period;
+    private String searchText;
     private Double progress;
 }

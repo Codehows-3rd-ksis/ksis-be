@@ -60,6 +60,8 @@ public class StatusService {
         dto.setUserId(work.getStartedBy().getUsername());
         dto.setType(work.getType());
         dto.setProgress(work.getProgress());
+        dto.setSearchText(work.getScheduler() != null ? work.getScheduler().getSearchText() : null);
+        dto.setPeriod(work.getScheduler() != null ? work.getScheduler().getStartDate() + " ~ " + work.getScheduler().getEndDate() : null);
         return dto;
     }
 

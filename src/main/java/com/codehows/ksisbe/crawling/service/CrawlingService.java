@@ -59,7 +59,7 @@ public class CrawlingService {
         // scheduler != null 이면 스케줄 실행 (권한 검사 X)
         String type = setting.getType();
         if ("단일".equalsIgnoreCase(type)) {
-            startSingleCrawlingService.startSingleCrawling(settingId, user);
+            startSingleCrawlingService.startSingleCrawling(settingId, user, scheduler);
         } else if ("다중".equalsIgnoreCase(type)) {
             startMultipleCrawlingService.startMultipleCrawling(settingId, user, scheduler);
         } else {

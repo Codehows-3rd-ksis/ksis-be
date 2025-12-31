@@ -42,7 +42,7 @@ public class CrawlWorkHistoryRepositoryImpl implements CrawlWorkHistoryRepositor
                             .and(work.startedBy.id.eq(userId));
 
             BooleanExpression scheduleCondition =
-                    work.type.eq("스케줄링")
+                    work.type.eq("스케줄러")
                             .and(work.setting.user.id.eq(userId));
 
             builder.and(manualCondition.or(scheduleCondition));
@@ -133,7 +133,7 @@ public class CrawlWorkHistoryRepositoryImpl implements CrawlWorkHistoryRepositor
                         .and(work.startedBy.id.eq(userId));
 
         BooleanExpression scheduleCondition =
-                work.type.eq("스케줄링")
+                work.type.eq("스케줄러")
                         .and(work.setting.user.id.eq(userId));
 
         builder.and(manualCondition.or(scheduleCondition));

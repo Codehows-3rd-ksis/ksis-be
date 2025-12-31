@@ -68,6 +68,7 @@ public class CrawlProgressPushService {
             );
             endAt = LocalDateTime.now();
         }
+
         CrawlMessage message = CrawlMessage.builder()
                 .type("COLLECT_UPDATE")
                 .workId(crawlWork.getWorkId())
@@ -84,11 +85,11 @@ public class CrawlProgressPushService {
                 )
                 .crawlResultItem(
                         CrawlResultItemDto.builder()
-                                .itemId(crawlResultItem.getItemId())
-                                .seq(crawlResultItem.getSeq())
-                                .resultValue(crawlResultItem.getResultValue())
-                                .state(crawlResultItem.getState())
-                                .url(crawlResultItem.getPageUrl())
+                                .itemId(crawlResultItem != null ? crawlResultItem.getItemId() : 0)
+                                .seq(crawlResultItem != null ? crawlResultItem.getSeq() : null)
+                                .resultValue(crawlResultItem != null ? crawlResultItem.getResultValue() : null)
+                                .state(crawlResultItem != null ? crawlResultItem.getState() : null)
+                                .url(crawlResultItem != null ? crawlResultItem.getPageUrl() : null)
                                 .build()
                 )
                 .build();

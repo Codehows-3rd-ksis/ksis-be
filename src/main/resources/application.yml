@@ -12,6 +12,9 @@ spring:
       ddl-auto: update
     show-sql: true
 
+  batch:
+    job:
+      enabled: false
 
 jwt:
   secret: "newyourjwtsecretkeythatisatleast256bitslongandbase64encodedexample1234567890123456789012345678901234567890newyourjwtsecretkeythatisatleast256bitslongandbase64encodedexample1234567890123456789012345678901234567890"

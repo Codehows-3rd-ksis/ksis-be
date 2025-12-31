@@ -4,6 +4,7 @@ import com.codehows.ksisbe.crawling.entity.CrawlResultItem;
 import com.codehows.ksisbe.crawling.entity.CrawlWork;
 import com.codehows.ksisbe.crawling.repository.CrawlResultItemRepository;
 import com.codehows.ksisbe.crawling.repository.CrawlWorkRepository;
+import com.codehows.ksisbe.scheduler.entity.Scheduler;
 import com.codehows.ksisbe.setting.entity.Conditions;
 import com.codehows.ksisbe.setting.entity.Setting;
 import com.codehows.ksisbe.setting.repository.SettingRepository;
@@ -35,14 +36,16 @@ public class StartMultipleCrawlingService {
     private final CrawlingFailService crawlingFailService;
     private final ExtractDetailUrlsMulti extractDetailUrlsMulti;
     private final CrawlProgressPushService crawlProgressPushService;
+    private final CrawlResultService crawlResultService;
 //    private final WorkSaverService  workSaverService;
 
-    @Transactional
-    public CrawlWork createCrawlWork(Setting setting, User user) {
+
+    public CrawlWork createCrawlWork(Setting setting, User user, Scheduler scheduler) {
         CrawlWork crawlWork = CrawlWork.builder()
                 .setting(setting)
-                .startedBy(user)
-                .type("수동실행")
+                .startedBy(scheduler == null ? user : scheduler.getUser())
+                .scheduler(scheduler)
+                .type(scheduler == null ? "수동실행" : "스케줄러")
                 .state("RUNNING")
                 .failCount(0)
                 .totalCount(0)
@@ -53,97 +56,43 @@ public class StartMultipleCrawlingService {
                 .isDelete("N")
                 .crawlResultItems(new ArrayList<>())
                 .build();
-        return crawlWorkRepository.saveAndFlush(crawlWork);
+        return crawlResultService.createCrawlWorkTransaction(crawlWork);
     }
 
-    public void startMultipleCrawling(Long settingId, User user) {
+    public void startMultipleCrawling(Long settingId, User user, Scheduler scheduler) {
         Setting setting = settingRepository.findBySettingIdAndIsDeleteWithConditions(settingId)
                 .orElseThrow(() -> new RuntimeException("유효하지 않은 설정입니다."));
-        CrawlWork crawlWork = createCrawlWork(setting, user);
+        CrawlWork crawlWork = createCrawlWork(setting, user, scheduler);
         WebDriver driver = null;
         try {
             driver = webDriverFactory.createDriver(setting.getUserAgent());
             driver.get(setting.getUrl());
 
             //목록페이지에서 상세 url 추출
-            int failCount = extractDetailUrlsMulti.extractDetailUrls(crawlWork, driver, setting);
-
+            int totalCount = extractDetailUrlsMulti.extractDetailUrls(crawlWork, driver, setting);
+            System.out.println("totalCount : " + totalCount);
             updateCrawlWorkFinalStatus(crawlWork);
-        }finally {
-            if (driver != null) {
-                driver.quit();
-            }
+        } catch (CrawlStopException e) {
+            crawlWork.setState("STOPPED");
+            crawlWork.setEndAt(LocalDateTime.now());
+            crawlWorkRepository.saveAndFlush(crawlWork);
+        } finally {
+            if (driver != null) driver.quit();
         }
     }
 
-    @Transactional
-    public CrawlResultItem saveResultItem(CrawlWork crawlWork, String pageUrl, Map<String, String> resultMap, int seq) throws Exception {
-        ObjectMapper mapper = new ObjectMapper();
-        String json = mapper.writeValueAsString(resultMap);
 
-        CrawlResultItem item = CrawlResultItem.builder()
-                .crawlWork(crawlWork)
-                .seq((long) seq)
-                .pageUrl(pageUrl)
-                .resultValue(json)
-                .state("SUCCESS")
-                .createAt(LocalDateTime.now())
-                .updateAt(LocalDateTime.now())
-                .build();
-        crawlWork.getCrawlResultItems().add(item);
-        item.setCrawlWork(crawlWork);
-
-        return crawlResultItemRepository.save(item);
-    }
-
-    @Transactional
-    public void incrementCollectCount(CrawlWork crawlWork) {
-        crawlWork.setCollectCount(crawlWork.getCollectCount() + 1);
-        crawlWorkRepository.save(crawlWork);
-    }
-
-    @Transactional
-    public void updateCollectProgress(CrawlWork crawlWork, int failCount, int totalCount) {
-        int collectCount = crawlWork.getCollectCount();
-        double progress = ((double) collectCount / totalCount) * 100;
-
-        crawlWork.setProgress(progress);
-        crawlWork.setFailCount(failCount);
-        crawlWork.setTotalCount(totalCount);
-        crawlWork.setUpdateAt(LocalDateTime.now());
-
-        LocalDateTime now = LocalDateTime.now();
-
-
-        // 경과 시간 (초)
-        long elapsedSeconds = java.time.Duration.between(crawlWork.getStartAt(), now).getSeconds();
-
-        if (collectCount > 0) {  // 0일 때는 나누기 불가 → null 유지
-            // 평균 처리 속도 (초/건)
-            double avgSpeed = (double) elapsedSeconds / collectCount;
-
-            // 남은 건수
-            int remainingCount = totalCount - collectCount;
-
-            // 예상 남은 시간(초)
-            long estimatedRemainSeconds = (long) (remainingCount * avgSpeed);
-
-            // 예상 완료 시간
-            LocalDateTime expectEndAt = now.plusSeconds(estimatedRemainSeconds);
-            crawlWork.setExpectEndAt(expectEndAt);
-        }
-
-        crawlWork.setUpdateAt(now);
-
-        crawlWorkRepository.save(crawlWork);
-        crawlProgressPushService.pushProgress(crawlWork);
-    }
-
-    @Transactional
     public void updateCrawlWorkFinalStatus(CrawlWork crawlWork) {
+        String currentState = crawlWorkRepository.findState(crawlWork.getWorkId());
+        if ("STOP_REQUEST".equals(currentState) || "STOPPED".equals(currentState)) {
+            return; // 상태 업데이트 금지
+        }
+
         int total = crawlWork.getTotalCount();
         int successCount = total - crawlWork.getFailCount();
-
+        System.out.println("final total : " + total);
+        System.out.println("final getFailCount : " + crawlWork.getFailCount());
+        System.out.println("final successCount : " + successCount);
         // 최종 상태 결정
         String finalState;
         if (crawlWork.getFailCount() == 0) {
@@ -158,7 +107,8 @@ public class StartMultipleCrawlingService {
         crawlWork.setEndAt(LocalDateTime.now());
         crawlWork.setUpdateAt(LocalDateTime.now());
 
-        crawlWorkRepository.save(crawlWork);
+//        crawlWorkRepository.save(crawlWork);
+        crawlResultService.updateFinalTransaction(crawlWork);
     }
 
     private Map<String, String> crawlDetailPage(WebDriver driver, Setting setting) {

@@ -4,12 +4,14 @@ import com.codehows.ksisbe.crawling.entity.CrawlResultItem;
 import com.codehows.ksisbe.crawling.entity.CrawlWork;
 import com.codehows.ksisbe.crawling.repository.CrawlResultItemRepository;
 import com.codehows.ksisbe.crawling.repository.CrawlWorkRepository;
+import com.codehows.ksisbe.scheduler.entity.Scheduler;
 import com.codehows.ksisbe.setting.entity.Conditions;
 import com.codehows.ksisbe.setting.entity.Setting;
 import com.codehows.ksisbe.setting.repository.SettingRepository;
 import com.codehows.ksisbe.user.User;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import org.antlr.v4.runtime.RuntimeMetaData;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
@@ -36,11 +38,12 @@ public class StartSingleCrawlingService {
 
     // CrawlWork 저장은 별도 트랜잭션 (커밋이 바로 됨)
     @Transactional
-    public CrawlWork createCrawlWork(Setting setting, User user) {
+    public CrawlWork createCrawlWork(Setting setting, User user, Scheduler scheduler) {
         CrawlWork crawlWork = CrawlWork.builder()
                 .setting(setting)
-                .startedBy(user)
-                .type("수동실행")
+                .startedBy(scheduler == null ? user : scheduler.getUser())
+                .scheduler(scheduler)
+                .type(scheduler == null ? "수동실행" : "스케줄러")
                 .state("RUNNING")
                 .failCount(0)
                 .totalCount(1)
@@ -54,12 +57,12 @@ public class StartSingleCrawlingService {
     }
 
     // 크롤링 실행 메서드는 트랜잭션 없이 (또는 필요 최소한으로만) 운영
-    public void startSingleCrawling(Long settingId, User user) {
+    public void startSingleCrawling(Long settingId, User user, Scheduler scheduler) {
         Setting setting = settingRepository.findBySettingIdAndIsDeleteWithConditions(settingId)
                 .orElseThrow(() -> new RuntimeException("유효한 설정입니다"));
 
         // 1) crawlWork 생성 및 DB 저장 (커밋 보장)
-        CrawlWork crawlWork = createCrawlWork(setting, user);
+        CrawlWork crawlWork = createCrawlWork(setting, user, scheduler);
 
         WebDriver driver = null;
         try {
@@ -107,6 +110,11 @@ public class StartSingleCrawlingService {
                 } else {
                     value = element.getAttribute(attr);
                 }
+                if (value == null || value.isBlank()) {
+                    throw new RuntimeException(
+                            "값이 비어 있음: " + c.getConditionsKey()
+                    );
+                }
                 resultMap.put(c.getConditionsKey(), value);
             } catch (NoSuchElementException e) {
                 resultMap.put(c.getConditionsKey(), null);
@@ -135,8 +143,10 @@ public class StartSingleCrawlingService {
 
     @Transactional
     public void updateCrawlWorkSuccess(CrawlWork crawlWork) {
+        double progress = 100;
         crawlWork.setState("SUCCESS");
         crawlWork.setCollectCount(1);
+        crawlWork.setProgress(progress);
         crawlWork.setEndAt(LocalDateTime.now());
         crawlWork.setUpdateAt(LocalDateTime.now());
 

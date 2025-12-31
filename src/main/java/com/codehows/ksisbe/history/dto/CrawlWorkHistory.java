@@ -26,4 +26,5 @@ public class CrawlWorkHistory {
     private LocalDate startDate;
     private LocalDate endDate;
     private String period;
+    private String searchText;
 }

@@ -3,6 +3,8 @@ package com.codehows.ksisbe.crawling.repository;
 import com.codehows.ksisbe.crawling.entity.CrawlWork;
 import com.codehows.ksisbe.user.User;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
@@ -16,4 +18,7 @@ public interface CrawlWorkRepository extends JpaRepository<CrawlWork,Long> {
 
     Optional<CrawlWork> findByWorkIdAndStartedByUsername(Long workId, String username);
     Optional<CrawlWork> findByWorkId(Long workId);
+
+    @Query("select c.state from CrawlWork c where c.workId = :workId")
+    String findState(@Param("workId") Long workId);
 }

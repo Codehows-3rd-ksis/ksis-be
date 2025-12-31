@@ -3,6 +3,7 @@ package com.codehows.ksisbe.status.dto.statusDetailDto;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Getter
@@ -13,9 +14,10 @@ public class BasicInfo {
     private String type;
     private String userId;
 
-    private LocalDateTime startDate;
-    private LocalDateTime endDate;
+    private LocalDate startDate;
+    private LocalDate endDate;
     private String cycle;
+    private String period;
 
     private LocalDateTime startAt;
     private LocalDateTime endAt;

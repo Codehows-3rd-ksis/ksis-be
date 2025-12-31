@@ -60,6 +60,8 @@ public class StatusService {
         dto.setUserId(work.getStartedBy().getUsername());
         dto.setType(work.getType());
         dto.setProgress(work.getProgress());
+        dto.setSearchText(work.getScheduler() != null ? work.getScheduler().getSearchText() : null);
+        dto.setPeriod(work.getScheduler() != null ? work.getScheduler().getStartDate() + " ~ " + work.getScheduler().getEndDate() : null);
         return dto;
     }
 
@@ -109,9 +111,10 @@ public class StatusService {
         basicInfo.setSettingName(work.getSetting().getSettingName());
         basicInfo.setType(work.getType());
         basicInfo.setUserId(work.getStartedBy().getUsername());
-//            basicInfo.setStartDate(work.getStartDate());
-//            basicInfo.setEndDate(work.getEndDate());
-//            basicInfo.setCycle(work.getCycle());
+        basicInfo.setStartDate(work.getScheduler() != null ? work.getScheduler().getStartDate() : null);
+        basicInfo.setEndDate(work.getScheduler() != null ? work.getScheduler().getEndDate() : null);
+        basicInfo.setPeriod(work.getScheduler() != null ? work.getScheduler().getStartDate() + " ~ " + work.getScheduler().getEndDate() : null);
+        basicInfo.setCycle(work.getScheduler() != null ? work.getScheduler().getSearchText() : null);
         basicInfo.setStartAt(work.getStartAt());
         basicInfo.setEndAt(work.getEndAt());
         basicInfo.setState(work.getState());

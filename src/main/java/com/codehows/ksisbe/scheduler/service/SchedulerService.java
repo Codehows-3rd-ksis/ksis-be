@@ -18,6 +18,8 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
@@ -92,6 +94,7 @@ public class SchedulerService {
         return page.map(SchedulerResponseDto::from);
     }
 
+    private static final List<String> DAY_ORDER = List.of("SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT");
     //스케줄러 검색용 컬럼정리: 주차
     private String createDisplayCycle(SchedulerRequestDto schedulerResqestDto) {
         String weekKorean = switch(schedulerResqestDto.getWeekOfMonth()) {
@@ -105,6 +108,7 @@ public class SchedulerService {
             default -> "";
         };
         String daysKorean = schedulerResqestDto.getDaysOfWeek().stream()
+                .sorted(Comparator.comparingInt(DAY_ORDER::indexOf))
                 .map(d -> switch (d) {
                     case "MON" -> "월요일";
                     case "TUE" -> "화요일";

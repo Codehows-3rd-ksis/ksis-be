@@ -18,6 +18,10 @@ public class SchedulerResponseDto {
     private LocalDate startDate;
     private LocalDate endDate;
 
+    private String displayTime;
+    private String displayCycle;
+    private String period;
+
     private String cronExpression;
     private String daysOfWeek;
     private String weekOfMonth;
@@ -29,6 +33,9 @@ public class SchedulerResponseDto {
                 .settingName(scheduler.getSetting().getSettingName())
                 .startDate(scheduler.getStartDate())
                 .endDate(scheduler.getEndDate())
+                .displayTime(scheduler.getDisplayTime())
+                .displayCycle(scheduler.getDisplayCycle())
+                .period(scheduler.getStartDate() + " ~ " + scheduler.getEndDate())
                 .cronExpression(scheduler.getCronExpression())
                 .daysOfWeek(scheduler.getDaysOfWeek())
                 .weekOfMonth(scheduler.getWeekOfMonth())

@@ -98,7 +98,6 @@ public class ExtractDetailUrlsMulti {
                     collected = crawlPageFromListArea(crawlWork, currentPage, driver, listArea, linkArea, setting, globalSeq);
                     total += collected;
                     checkStop(crawlWork);
-                    failCount += crawlPageFromListArea(crawlWork, currentPage, driver, listArea, linkArea, setting);
 
                     if (clickNextButton(driver, pagingNextbtn)) {
                         waitForPageLoad(driver, setting);
@@ -122,7 +121,6 @@ public class ExtractDetailUrlsMulti {
                     collected = crawlPageFromListArea(crawlWork, currentPage, driver, listArea, linkArea, setting, globalSeq);
                     total += collected;
                     checkStop(crawlWork);
-                    failCount += crawlPageFromListArea(crawlWork, currentPage, driver, listArea, linkArea, setting);
 
                     if (pagingNextbtn != null && !pagingNextbtn.isEmpty()) {
                         // 다음 AJAX 버튼 클릭
@@ -229,7 +227,6 @@ public class ExtractDetailUrlsMulti {
                 int totalCount = setting.getMaxPage() * found.size();
                 if (!found.isEmpty()) {
                     for (int i = 0; i < found.size(); i++) {
-                    for (int i = 0; i < found.size(); i++, seq++) {
                         checkStop(crawlWork);
 
                         WebElement freshListRoot = driver.findElement(By.cssSelector(listArea));
@@ -257,7 +254,6 @@ public class ExtractDetailUrlsMulti {
                         try{
                             Map<String, String> result = crawlDetailPage(driver, setting);
                             resultItem = saveResultItem(crawlWork, currentUrl, result, globalSeq);
-                            resultItem = saveResultItem(crawlWork, currentUrl, result, found.size() * (pageNum-1) + seq);
                             checkStop(crawlWork);
                         } catch (CrawlStopException e) {
                             throw e;

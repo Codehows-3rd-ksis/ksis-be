@@ -97,6 +97,7 @@ public class ExtractDetailUrlsMulti {
                 while (hasNextPage) {
                     collected = crawlPageFromListArea(crawlWork, currentPage, driver, listArea, linkArea, setting, globalSeq);
                     total += collected;
+                    globalSeq = total + 1;
                     checkStop(crawlWork);
 
                     if (clickNextButton(driver, pagingNextbtn)) {
@@ -106,37 +107,13 @@ public class ExtractDetailUrlsMulti {
                     }
                     currentPage++;
 
-                    if (collected == 0) {
-                        // 더 이상 페이지에 데이터가 없음
+                    if (currentPage > maxPage) {
                         crawlWork.setCollectCount(crawlWork.getCollectCount());
                         crawlWorkRepository.saveAndFlush(crawlWork);
                         updateCollectProgress(crawlWork, 0, total);
                         crawlProgressPushService.pushCollect(crawlWork, null);
                         break;
                     }
-                }
-                break;
-            case "AJAX":
-                while (currentPage <= maxPage) {
-                    collected = crawlPageFromListArea(crawlWork, currentPage, driver, listArea, linkArea, setting, globalSeq);
-                    total += collected;
-                    checkStop(crawlWork);
-
-                    if (pagingNextbtn != null && !pagingNextbtn.isEmpty()) {
-                        // 다음 AJAX 버튼 클릭
-                        if (clickNextButton(driver, pagingNextbtn)) {
-                            waitForAjaxLoad(driver, setting);
-                        } else {
-                            break;
-                        }
-                    } else {
-                        // 버튼이 없으면 스크롤 방식 등, 필요시 구현
-                        // 예시: 스크롤 후 기다림
-                        ((JavascriptExecutor) driver).executeScript("window.scrollTo(0, document.body.scrollHeight);");
-                        waitForAjaxLoad(driver, setting);
-                    }
-
-                    currentPage++;
 
                     if (collected == 0) {
                         // 더 이상 페이지에 데이터가 없음
@@ -148,6 +125,38 @@ public class ExtractDetailUrlsMulti {
                     }
                 }
                 break;
+//            case "AJAX":
+//                while (currentPage <= maxPage) {
+//                    collected = crawlPageFromListArea(crawlWork, currentPage, driver, listArea, linkArea, setting, globalSeq);
+//                    total += collected;
+//                    checkStop(crawlWork);
+//
+//                    if (pagingNextbtn != null && !pagingNextbtn.isEmpty()) {
+//                        // 다음 AJAX 버튼 클릭
+//                        if (clickNextButton(driver, pagingNextbtn)) {
+//                            waitForAjaxLoad(driver, setting);
+//                        } else {
+//                            break;
+//                        }
+//                    } else {
+//                        // 버튼이 없으면 스크롤 방식 등, 필요시 구현
+//                        // 예시: 스크롤 후 기다림
+//                        ((JavascriptExecutor) driver).executeScript("window.scrollTo(0, document.body.scrollHeight);");
+//                        waitForAjaxLoad(driver, setting);
+//                    }
+//
+//                    currentPage++;
+//
+//                    if (collected == 0) {
+//                        // 더 이상 페이지에 데이터가 없음
+//                        crawlWork.setCollectCount(crawlWork.getCollectCount());
+//                        crawlWorkRepository.saveAndFlush(crawlWork);
+//                        updateCollectProgress(crawlWork, 0, total);
+//                        crawlProgressPushService.pushCollect(crawlWork, null);
+//                        break;
+//                    }
+//                }
+//                break;
         }
         return total;
     }

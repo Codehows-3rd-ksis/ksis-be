@@ -55,6 +55,7 @@ public class ExtractDetailUrlsMulti {
                 boolean hasNextPagingGroup = true;
 
                 while (hasNextPagingGroup && currentPage <= maxPage) {
+                    checkStop(crawlWork);
                     boolean clicked = clickpageNumber(driver, pagingArea, currentPage);
                     if (!clicked) {
                         if (clickNextButton(driver, pagingNextbtn)) {
@@ -96,6 +97,9 @@ public class ExtractDetailUrlsMulti {
                 while (hasNextPage) {
                     collected = crawlPageFromListArea(crawlWork, currentPage, driver, listArea, linkArea, setting, globalSeq);
                     total += collected;
+                    checkStop(crawlWork);
+                    failCount += crawlPageFromListArea(crawlWork, currentPage, driver, listArea, linkArea, setting);
+
                     if (clickNextButton(driver, pagingNextbtn)) {
                         waitForPageLoad(driver, setting);
                     } else {
@@ -117,6 +121,9 @@ public class ExtractDetailUrlsMulti {
                 while (currentPage <= maxPage) {
                     collected = crawlPageFromListArea(crawlWork, currentPage, driver, listArea, linkArea, setting, globalSeq);
                     total += collected;
+                    checkStop(crawlWork);
+                    failCount += crawlPageFromListArea(crawlWork, currentPage, driver, listArea, linkArea, setting);
+
                     if (pagingNextbtn != null && !pagingNextbtn.isEmpty()) {
                         // 다음 AJAX 버튼 클릭
                         if (clickNextButton(driver, pagingNextbtn)) {
@@ -222,6 +229,9 @@ public class ExtractDetailUrlsMulti {
                 int totalCount = setting.getMaxPage() * found.size();
                 if (!found.isEmpty()) {
                     for (int i = 0; i < found.size(); i++) {
+                    for (int i = 0; i < found.size(); i++, seq++) {
+                        checkStop(crawlWork);
+
                         WebElement freshListRoot = driver.findElement(By.cssSelector(listArea));
                         List<WebElement> freshFound = freshListRoot.findElements(selector);
 
@@ -247,13 +257,20 @@ public class ExtractDetailUrlsMulti {
                         try{
                             Map<String, String> result = crawlDetailPage(driver, setting);
                             resultItem = saveResultItem(crawlWork, currentUrl, result, globalSeq);
+                            resultItem = saveResultItem(crawlWork, currentUrl, result, found.size() * (pageNum-1) + seq);
+                            checkStop(crawlWork);
+                        } catch (CrawlStopException e) {
+                            throw e;
                         } catch (Exception e) {
                             e.printStackTrace();
                             failCount++;
                             resultItem = crawlingFailService.saveFailedResultMulti(crawlWork.getWorkId(), currentUrl, (long)globalSeq );
                         }finally {
                             crawlWork.setCollectCount(crawlWork.getCollectCount() + 1);
-                            crawlWorkRepository.saveAndFlush(crawlWork);
+                            String currentState = crawlWorkRepository.findState(crawlWork.getWorkId());
+                            if (!"STOP_REQUEST".equals(currentState) && !"STOPPED".equals(currentState)) {
+                                crawlWorkRepository.saveAndFlush(crawlWork);
+                            }
                             updateCollectProgress(crawlWork, failCount, totalCount);
                             crawlProgressPushService.pushCollect(crawlWork, resultItem);
                             failCount = 0;
@@ -272,6 +289,8 @@ public class ExtractDetailUrlsMulti {
                 }
             }
 
+        } catch (CrawlStopException e) {
+            throw e;
         } catch (Exception e) {
             System.out.println("Flexible extract error: " + e.getMessage());
         }
@@ -280,6 +299,11 @@ public class ExtractDetailUrlsMulti {
     }
 
     public void updateCollectProgress(CrawlWork crawlWork, int failCount, int totalCount) {
+        String currentState = crawlWorkRepository.findState(crawlWork.getWorkId());
+        if ("STOP_REQUEST".equals(currentState) || "STOPPED".equals(currentState)) {
+            return; // 상태 업데이트 금지
+        }
+
         int collectCount = crawlWork.getCollectCount();
         double progress = ((double) collectCount / totalCount) * 100;
 
@@ -360,5 +384,17 @@ public class ExtractDetailUrlsMulti {
             }
         }
         return resultMap;
+    }
+
+    private void checkStop(CrawlWork crawlWork) {
+//        crawlWorkRepository.flush(); // 최신 상태 보장
+//        CrawlWork fresh = crawlWorkRepository.findById(crawlWork.getWorkId())
+//                .orElseThrow();
+
+        String state = crawlWorkRepository.findState(crawlWork.getWorkId());
+//        if ("STOP_REQUEST".equals(fresh.getState())) {
+        if ("STOP_REQUEST".equals(state)) {
+                throw new CrawlStopException();
+        }
     }
 }

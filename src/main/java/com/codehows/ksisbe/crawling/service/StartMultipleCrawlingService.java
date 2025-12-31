@@ -72,15 +72,22 @@ public class StartMultipleCrawlingService {
             int totalCount = extractDetailUrlsMulti.extractDetailUrls(crawlWork, driver, setting);
             System.out.println("totalCount : " + totalCount);
             updateCrawlWorkFinalStatus(crawlWork);
-        }finally {
-            if (driver != null) {
-                driver.quit();
-            }
+        } catch (CrawlStopException e) {
+            crawlWork.setState("STOPPED");
+            crawlWork.setEndAt(LocalDateTime.now());
+            crawlWorkRepository.saveAndFlush(crawlWork);
+        } finally {
+            if (driver != null) driver.quit();
         }
     }
 
 
     public void updateCrawlWorkFinalStatus(CrawlWork crawlWork) {
+        String currentState = crawlWorkRepository.findState(crawlWork.getWorkId());
+        if ("STOP_REQUEST".equals(currentState) || "STOPPED".equals(currentState)) {
+            return; // 상태 업데이트 금지
+        }
+
         int total = crawlWork.getTotalCount();
         int successCount = total - crawlWork.getFailCount();
         System.out.println("final total : " + total);

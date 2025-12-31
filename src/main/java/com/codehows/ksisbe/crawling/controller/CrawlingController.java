@@ -1,15 +1,14 @@
 package com.codehows.ksisbe.crawling.controller;
 
 import com.codehows.ksisbe.crawling.service.CrawlingService;
+import com.codehows.ksisbe.user.dto.UserAccountUpdateRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @Slf4j
 @RestController
@@ -38,5 +37,11 @@ public class CrawlingController {
 
         // 프론트에는 즉시 반환
         return ResponseEntity.ok("수집 시작됨 (백엔드에서 비동기 실행 중)");
+    }
+
+    @PutMapping("/crawl/stop/{workId}")
+    public ResponseEntity<?> stopRequestCrawling(@PathVariable Long workId, Authentication authentication) {
+        crawlingService.requestStop(workId);
+        return ResponseEntity.ok("수집 중지 요청");
     }
 }

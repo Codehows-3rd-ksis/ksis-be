@@ -222,6 +222,6 @@ public class SchedulerService {
         scheduler.setIsDelete("Y");
         schedulerRepository.save(scheduler);
 
-        schedulerManager.schedule(scheduler);
+        schedulerManager.cancel(schedulerId);
     }
 }

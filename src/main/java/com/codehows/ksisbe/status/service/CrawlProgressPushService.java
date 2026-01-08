@@ -77,7 +77,7 @@ public class CrawlProgressPushService {
                                 .totalCount(crawlWork.getTotalCount())
                                 .collectCount(crawlWork.getCollectCount())
                                 .failCount(crawlWork.getFailCount())
-                                .progress(crawlWork.getProgress())
+                                .progressRate(crawlWork.getProgress())
                                 .expectEndAt(crawlWork.getExpectEndAt())
                                 .endAt(endAt)
                                 .state(finalState)

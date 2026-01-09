@@ -23,5 +23,5 @@ public class BasicInfo {
     private LocalDateTime endAt;
 
     private String state;
-    private Double progress;
+    private Double progressRate;
 }

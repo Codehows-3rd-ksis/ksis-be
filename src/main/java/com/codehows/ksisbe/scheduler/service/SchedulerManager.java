@@ -13,12 +13,18 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.scheduling.support.CronTrigger;
 import org.springframework.stereotype.Component;
 
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ScheduledFuture;
+
 @Slf4j
 @Component
 public class SchedulerManager {
 
     private final ThreadPoolTaskScheduler taskScheduler;
     private final CrawlingService crawlingService;
+
+    private final Map<Long, ScheduledFuture<?>> scheduledTasks = new ConcurrentHashMap<>();
 
     public SchedulerManager(
             @Qualifier("schedulerTaskScheduler")
@@ -31,28 +37,31 @@ public class SchedulerManager {
 
     public void schedule(Scheduler scheduler) {
 
-        if (!ScheduleValidator.isExecutable(scheduler)) {
-            log.info("스케줄 실행 조건 불일치 - schedulerId={}",
-                    scheduler.getScheduleId());
-            return;
-        }
+        Long schedulerId = scheduler.getScheduleId();
+        Long settingId   = scheduler.getSetting().getSettingId();
 
         Runnable task = () -> {
-            Long schedulerId = scheduler.getScheduleId();
-            Long settingId   = scheduler.getSetting().getSettingId();
 
-            log.info("크롤링 실행 schedulerId={}, settingId={}",
-                    schedulerId, settingId);
 
-            crawlingService.startCrawlingBySchedule(
-                    schedulerId,
-                    settingId
-            );
+            if (!ScheduleValidator.isExecutable(scheduler)) {
+                log.info("실행 조건 불일치 - schedulerId={}", schedulerId);
+                return;
+            }
+
+            log.info("크롤링 실행 schedulerId={}, settingId={}", schedulerId, settingId);
+            crawlingService.startCrawlingBySchedule(schedulerId, settingId);
         };
 
-        taskScheduler.schedule(
-                task,
-                new CronTrigger(scheduler.getCronExpression())
-        );
+        ScheduledFuture<?> future =
+                taskScheduler.schedule(task, new CronTrigger(scheduler.getCronExpression()));
+
+        scheduledTasks.put(schedulerId, future);
+    }
+    public void cancel(Long schedulerId) {
+        ScheduledFuture<?> future = scheduledTasks.remove(schedulerId);
+        if (future != null) {
+            future.cancel(false);
+            log.info("스케줄 취소 - schedulerId={}", schedulerId);
+        }
     }
 }

@@ -13,7 +13,7 @@ public class CrawlProgressDto {
     private Integer totalCount;
     private Integer collectCount;
     private Integer failCount;
-    private Double progress;
+    private Double progressRate;
     private LocalDateTime expectEndAt;
 
     private LocalDateTime endAt;

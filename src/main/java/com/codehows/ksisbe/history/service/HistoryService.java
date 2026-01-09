@@ -118,7 +118,7 @@ public class HistoryService {
         basicInfo.setStartAt(work.getStartAt());
         basicInfo.setEndAt(work.getEndAt());
         basicInfo.setState(work.getState());
-        basicInfo.setProgress(work.getProgress());
+        basicInfo.setProgressRate(work.getProgress());
 
         ProgressInfo progressInfo = new ProgressInfo();
         progressInfo.setTotalCount(work.getTotalCount());
@@ -133,7 +133,7 @@ public class HistoryService {
         response.setBasicInfo(basicInfo);
         response.setFailureList(failureList);
         response.setCollectionData(collectionData);
-        response.setProgress(progressInfo);
+        response.setProgressInfo(progressInfo);
 
         return response;
     }

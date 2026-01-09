@@ -168,7 +168,8 @@ public class SchedulerService {
         originScheduler.setUpdateAt(LocalDateTime.now());
         schedulerRepository.save(originScheduler);
 
-        //스케줄러 제거할 부분 필요
+        //스케줄러 제거할 부분
+        schedulerManager.cancel(schedulerId);
 
         String daysOfWeekStr = String.join(
                 ",",
@@ -222,6 +223,6 @@ public class SchedulerService {
         scheduler.setIsDelete("Y");
         schedulerRepository.save(scheduler);
 
-        schedulerManager.schedule(scheduler);
+        schedulerManager.cancel(schedulerId);
     }
 }
